@@ -1,0 +1,15 @@
+﻿*.7z
+*.mkv
+*.txt
+*.pdf
+*.csv
+*.xlsx
+/movies/*
+.vscode/*
+/*TESTFILES/*
+!picture_tool_TESTFILES.7z
+
+# DEFINITION: ignore file that's in the repo
+# CREDIT: https://www.git-scm.com/docs/git-update-index
+# CREDIT: https://stackoverflow.com/a/7232354/8013879
+# git update-index --assume-unchanged .\BLA.bla

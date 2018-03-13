@@ -1,0 +1,16 @@
+[
+	{
+		"preset": "default",
+		"values": {
+			"artist_name": "Wendy Torrance",
+			"copyright_text": "Room 237 Enterprises"
+		}
+	},
+	{
+		"preset": "johnnyboy",
+		"values": {
+			"artist_name": "John Daniel Edward Torrance",
+			"copyright_text": "All-Work-And-No-Play-Makes-Jack-A-Dull-Boy, LLC"
+		}
+	}
+]
