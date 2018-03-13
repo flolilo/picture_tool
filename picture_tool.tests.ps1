@@ -9,7 +9,7 @@
 
 . $PSScriptRoot\picture_tool.ps1
 
-
+# TODO: also test for transferring only
 
 <# DONE:    Describe "Test-EXEPaths" {
             $BlaDrive = "$TestDrive\TEST"
