@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.1
-        Date:       2018-03-13
+        Version:    3.2
+        Date:       2018-03-17
         Author:     flolilo
 
     .INPUTS
@@ -151,7 +151,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.1 - 2018-03-13"
+    $VersionNumber = "v3.2 - 2018-03-17"
 
 
 # ==================================================================================================
