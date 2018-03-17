@@ -810,9 +810,11 @@ Function Start-Recycling(){
             Write-ColorOut "Remove-ItemSafely `"$($_.SourceFullName.Replace("$debuginter","."))`"" -ForegroundColor Gray -Indentation 4
         }
         try {
-            Remove-ItemSafely $_.SourceFullName -ErrorAction Stop
+            Remove-ItemSafely -LiteralPath $_.SourceFullName
         }catch{
-            Write-ColorOut "Could not delete $($_.SourceFullName.Replace("$debuginter","."))" -ForegroundColor Magenta -Indentation 2
+            if($script:Debug -gt 0){
+                Write-ColorOut "Could not delete `"$($_.SourceFullName.Replace("$debuginter","."))`"" -ForegroundColor Magenta -Indentation 2
+            }
             $errorcounter++
         }
         $i++
