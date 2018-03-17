@@ -4,6 +4,6 @@
 All non-generic commands are tested to their extremes with Pester - unicode-signs, brackets, spaces - nothing should break this code now!
 Test it for yourself:
 
-'''powershell
+```powershell
     Invoke-Pester .\picture_tool.tests.ps1 -CodeCoverage .\picture_tool.ps1
-'''
+```
