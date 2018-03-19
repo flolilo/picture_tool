@@ -20,6 +20,6 @@ Test it for yourself:
 
 ## Troubleshooting
 
- - If non-ASCII characters give your script trouble, it might be that it was saved with the wrong encoding. Unfortunately, PowerShell needs **UTF8 with BOM** to function properly (that is: most of the time, it works perfecly well without it, but once in a while, it will break). To check this, I recommend using either [Notepad++](https://notepad-plus-plus.org/) or [VSCode](https://code.visualstudio.com/) (though any advanced text editor will do the job). There, you can change the encoding to UTF with BOM.
+ - If non-ASCII characters give your script trouble, it might be that it was saved with the wrong encoding. Unfortunately, PowerShell needs **UTF8 with BOM** to function properly _(that is: most of the time, it works perfecly well without it, but once in a while, it will break)_. To check this, I recommend using either [Notepad++](https://notepad-plus-plus.org/) or [VSCode](https://code.visualstudio.com/) (though any advanced text editor will do the job). There, you can change the encoding to UTF with BOM.
 
  - If the script does not open on your Computer running Windows 7 (or earlier): You need at least PowerShell v3 running on your OS, so [get WMF 5.1](https://www.microsoft.com/en-us/download/details.aspx?id=54616). Also, you need the [Recycle-Module](https://github.com/bdukes/PowerShellModules).
