@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.2
-        Date:       2018-03-17
+        Version:    3.3
+        Date:       2018-03-19
         Author:     flolilo
 
     .INPUTS
@@ -62,6 +62,9 @@
     .PARAMETER MagickThreads
         default: 12
         Thread-Count for conversion. Valid range: 1-48.
+    .PARAMETER EXIFtoolFailSafe
+        1 enables (default), 0 disables.
+        Run Exiftool without any commands in an earlier stage. This will prevent errors due to the fact that when installing a new version of Exiftool, the first start will need a few seconds. The rest of the time, the whole process will be slowed down by around 1 second.
     .PARAMETER Debug
         default: 0
         1 stops after each step, 2 additionally outputs some commands.
@@ -100,6 +103,8 @@ param(
     [string]$Magick =               "$($PSScriptRoot)\ImageMagick\magick.exe",
     [ValidateRange(1,48)]
     [int]$MagickThreads =           12,
+    [ValidateRange(0,1)]
+    [int]$EXIFtoolFailSafe =        1,
     [int]$Debug =                   0
 )
 # DEFINITION: Combine all parameters into a hashtable, then delete the parameter variables:
@@ -121,8 +126,9 @@ param(
         EXIFtool=               $EXIFtool
         Magick =                $Magick
         MagickThreads =         $MagickThreads
-        }
-    Remove-Variable -Name InputPath,Convert2JPEG,EXIFManipulation,EXIFTransferOnly,EXIFDeleteAll,EXIFAddCopyright,EXIFPresetName,EXIFArtistName,EXIFCopyrightText,Formats,ConvertQuality,ConvertRemoveSource,Convert2SRGB,ConvertScaling,EXIFtool,Magick,MagickThreads
+        EXIFtoolFailSafe =      $EXIFtoolFailSafe
+    }
+    Remove-Variable -Name InputPath,Convert2JPEG,EXIFManipulation,EXIFTransferOnly,EXIFDeleteAll,EXIFAddCopyright,EXIFPresetName,EXIFArtistName,EXIFCopyrightText,Formats,ConvertQuality,ConvertRemoveSource,Convert2SRGB,ConvertScaling,EXIFtool,Magick,MagickThreads,EXIFtoolFailSafe
 
 # DEFINITION: Get all error-outputs in English:
     [Threading.Thread]::CurrentThread.CurrentUICulture = 'en-US'
@@ -151,7 +157,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.2 - 2018-03-17"
+    $VersionNumber = "v3.3 - 2018-03-19"
 
 
 # ==================================================================================================
@@ -348,7 +354,11 @@ Function Test-EXEPaths(){
                 return $false
             }
         }
+        if($UserParams.EXIFtoolFailSafe -ne 0){
+            Start-Process -FilePath $UserParams.EXIFtool -ArgumentList "-ver" -WindowStyle Hidden -Wait
+        }
     }
+
     if($UserParams.Convert2JPEG -eq 1){
         if((Test-Path -LiteralPath $UserParams.Magick -PathType Leaf) -eq $false){
             if((Test-Path -LiteralPath "$($PSScriptRoot)\Magick.exe" -PathType Leaf) -eq $true){

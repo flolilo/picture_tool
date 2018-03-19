@@ -1,4 +1,5 @@
 TODO for EXIF_manipulation tools:
-    [x] combine exif_transfer and picture_tool @done(18-03-13 13:22)
+    [x] Provide a safe-mode for running exiftool the first time (will fail otherwise). @done(18-03-19 11:44)
+    [x] Combine exif_transfer and picture_tool @done(18-03-13 13:22)
     [x] Clean up merging mess (a.k.a. proper documentation of parameters) @high @done(18-03-13 13:25)
     [x] Pester-testing! @high @done(18-03-17 18:13)
