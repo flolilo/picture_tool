@@ -147,10 +147,10 @@ param(
             Write-Host "administrative console " -ForegroundColor Yellow -NoNewline
             Write-Host "via " -ForegroundColor Red -NoNewline
             Write-Host "Install-Module Recycle" -NoNewline
-            Write-Host ", download it from " -ForegroundColor Red -NoNewline
+            Write-Host ", or download it from " -ForegroundColor Red -NoNewline
             Write-Host "github.com/bdukes/PowerShellModules/tree/master/Recycle " -NoNewline
             Write-Host "and install it to " -ForegroundColor Red -NoNewline
-            Write-Host "<SCRIPT_PATH>\Modules\Recycle\<VERSION.NUMBER>" -NoNewline -ForegroundColor Gray
+            Write-Host "$($PSScriptRoot)\Modules\Recycle\<VERSION.NUMBER>" -NoNewline -ForegroundColor Gray
             Write-Host "." -ForegroundColor Red
             Pause
             Exit
