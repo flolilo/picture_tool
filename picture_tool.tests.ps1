@@ -34,6 +34,7 @@ Describe "Test-EXEPaths" {
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
             Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            EXIFtoolFailSafe =      1
             MagickThreads =         12
         }
     }
@@ -82,6 +83,9 @@ Describe "Test-EXEPaths" {
         }
     }
     Context "No problems with SpecChars" {
+        BeforeEach {
+            $UserParams.EXIFtoolFailSafe = 0
+        }
         It "12345" {
             $UserParams.EXIFtool = "$BlaDrive\123456789 ordner\123412356789 exiftool.exe"
             $test = Test-EXEPaths -UserParams $UserParams
@@ -270,6 +274,7 @@ Describe "Start-Converting" {
             ConvertRemoveSource =   1
             Convert2SRGB =          0
             ConvertScaling =        100
+            EXIFtool=               "$BlaDrive\exiftool.exe"
             Magick =                "$BlaDrive\ImageMagick\magick.exe"
             MagickThreads =         12
         }
@@ -298,11 +303,21 @@ Describe "Start-Converting" {
         }
         It "Work with all settings" {
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams.Convert2SRGB = 1
-            $UserParams.ConvertQuality = 10
-            $UserParams.ConvertScaling = 10
+            $UserParams.Convert2SRGB =      1
+            $UserParams.ConvertQuality =    10
+            $UserParams.ConvertScaling =    10
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
+            Push-Location $BlaDrive
+            foreach($i in $WorkingFiles.JPEGFullName){
+                $meta = @()
+                $meta = @(.\exiftool.exe "$i" -All:All -J | ConvertFrom-Json)
+                $meta.EncodingProcess   | Should Be "Progressive DCT, Huffman coding"
+                # TODO: does not yet show up with test-files...
+                # $meta.YCbCrSubSampling  | Should Be "YCbCr4:4:4 (1 1)"
+                $meta.BitsPerSample     | Should Be "8"
+            }
+            Pop-Location
             (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
             $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
             $bla | ForEach-Object {

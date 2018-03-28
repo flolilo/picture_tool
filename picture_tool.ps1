@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.3
-        Date:       2018-03-19
+        Version:    3.4
+        Date:       2018-03-28
         Author:     flolilo
 
     .INPUTS
@@ -157,7 +157,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.3 - 2018-03-19"
+    $VersionNumber = "v3.4 - 2018-03-28"
 
 
 # ==================================================================================================
@@ -550,7 +550,7 @@ Function Start-Converting(){
         }
 
         # TODO: "-layers merge" for layered images
-        [string]$ArgList = "convert -quality $($UserParams.ConvertQuality) -depth 8 `"$($_.SourceFullName)`""
+        [string]$ArgList = "convert `"$($_.SourceFullName)`" -quality $($UserParams.ConvertQuality) -interlace line -define jpeg:dct-method=float -define jpeg:fancy-upsampling=on -define jpeg:optimize-coding=on -sampling-factor 4:4:4 -depth 8"
         if($UserParams.Convert2SRGB -eq 1){
             $ArgList += " -profile `"C:\Windows\System32\spool\drivers\color\sRGB Color Space Profile.icm`" -colorspace sRGB"
         }
@@ -918,4 +918,4 @@ Function Start-Everything(){
     Invoke-Close -PSPID $preventstandbyid
 }
 
-Start-Everything -UserParams $UserParams
+# Start-Everything -UserParams $UserParams

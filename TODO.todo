@@ -1,4 +1,7 @@
 TODO for EXIF_manipulation tools:
+    [ ] Provide some numbers (files found / files processed)
+    [ ] Pester: Test converted pictures for bit depth/color space/interlacing @high 
+        [x] At least bit depth & progressive-saving work @done(18-03-28 19:28)
     [x] Provide a safe-mode for running exiftool the first time (will fail otherwise). @done(18-03-19 11:44)
     [x] Combine exif_transfer and picture_tool @done(18-03-13 13:22)
     [x] Clean up merging mess (a.k.a. proper documentation of parameters) @high @done(18-03-13 13:25)
