@@ -348,7 +348,8 @@ Function Test-EXEPaths(){
             if((Test-Path -LiteralPath "$($PSScriptRoot)\exiftool.exe" -PathType Leaf) -eq $true){
                 [string]$UserParams.EXIFtool = "$($PSScriptRoot)\exiftool.exe"
             }else{
-                Write-ColorOut "ExifTool not found - aborting!" -ForegroundColor Red -Indentation 2
+                Write-ColorOut "ExifTool not found - You can download it from sno.phy.queensu.ca/~phil/exiftool" -ForegroundColor Magenta -Indentation 2
+                Write-ColorOut "Aborting!" -ForegroundColor Red -Indentation 2
                 Start-Sound -Success 0
                 Start-Sleep -Seconds 2
                 return $false
@@ -364,7 +365,8 @@ Function Test-EXEPaths(){
             if((Test-Path -LiteralPath "$($PSScriptRoot)\Magick.exe" -PathType Leaf) -eq $true){
                 [string]$UserParams.Magick = "$($PSScriptRoot)\Magick.exe"
             }else{
-                Write-ColorOut "ImageMagick not found - aborting!" -ForegroundColor Red -Indentation 2
+                Write-ColorOut "ImageMagick not found - You can download it from imagemagick.org/script/download.php#windows" -ForegroundColor Magenta -Indentation 2
+                Write-ColorOut "Aborting!" -ForegroundColor Red -Indentation 2
                 Start-Sound -Success 0
                 Start-Sleep -Seconds 2
                 return $false
