@@ -98,6 +98,12 @@ Describe "Test-EXEPaths" {
             $test | Should BeOfType hashtable
             $test.ConvertQuality | Should Be 92
         }
+        It "©" {
+            $UserParams.EXIFtool = "$BlaDrive\©Ordner\©exiftool.exe"
+            $test = Test-EXEPaths -UserParams $UserParams
+            $test | Should BeOfType hashtable
+            $test.ConvertQuality | Should Be 92
+        }
         It "backtick" {
             $UserParams.EXIFtool = "$BlaDrive\backtick ````ordner ``\backtick ````exiftool ``.exe"
             $test = Test-EXEPaths -UserParams $UserParams
@@ -163,7 +169,7 @@ Describe "Get-InputFiles" {
         It "Return array if all is well" {
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "Return array even with one item" {
             $UserParams.Formats = @("*.png")
@@ -175,13 +181,13 @@ Describe "Get-InputFiles" {
             $UserParams.InputPath = @("$BlaDrive\")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "Get multiple folders" {
             $UserParams.InputPath = @("$BlaDrive","$BlaDrive\123456789 ordner")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 18
+            $test.Length | Should Be 20
         }
         It "Get single file" {
             $UserParams.InputPath = @("$BlaDrive\123412356789 file.jpg")
@@ -199,7 +205,7 @@ Describe "Get-InputFiles" {
             $UserParams.InputPath = @("$BlaDrive","$BlaDrive\123412356789 file.jpg")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 10
+            $test.Length | Should Be 11
         }
         It "Non-existing files/folders work" {
             $UserParams.InputPath = @("$BlaDrive\nofile.jpg")
@@ -223,37 +229,43 @@ Describe "Get-InputFiles" {
             $UserParams.InputPath = @("$BlaDrive\123456789 ordner")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "Æ" {
             $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
+        }
+        It "©" {
+            $UserParams.EXIFtool = "$BlaDrive\©Ordner"
+            $test = @(Get-InputFiles -UserParams $UserParams)
+            ,$test | Should BeOfType array
+            $test.Length | Should Be 10
         }
         It "backtick" {
             $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "bracket" {
             $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "dots" {
             $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
         It "specials" {
             $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 9
+            $test.Length | Should Be 10
         }
     }
 }
@@ -293,7 +305,7 @@ Describe "Start-Converting" {
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
             $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
             $bla | ForEach-Object {
                 if($WorkingFiles.SourceFullName -notcontains $_){
@@ -318,7 +330,7 @@ Describe "Start-Converting" {
                 $meta.BitsPerSample     | Should Be "8"
             }
             Pop-Location
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
             $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
             $bla | ForEach-Object {
                 if($WorkingFiles.SourceFullName -notcontains $_){
@@ -330,7 +342,7 @@ Describe "Start-Converting" {
             Mock Start-Process {throw}
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 9
+            $test | Should Be 10
             Assert-MockCalled Start-Process -Times 9
         }
     }
@@ -340,42 +352,49 @@ Describe "Start-Converting" {
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
         It "Æ" {
             $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
+        }
+        It "©" {
+            $UserParams.InputPath = @("$BlaDrive\©Ordner")
+            $WorkingFiles = Get-InputFiles -UserParams $UserParams
+            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            $test | Should Be 0
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
         It "backtick" {
             $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
         It "bracket" {
             $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
         It "dots" {
             $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
         It "specials" {
             $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 18
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
         }
     }
 }
@@ -446,6 +465,15 @@ Describe "Get-EXIFValues" {
             $test | Should BeOfType hashtable
             $test.EXIFArtistName | Should Be "paramTestName"
             $test.EXIFCopyrightText | Should Be "paramTestRight"
+        }
+    }
+    Context "Works with SpecChars" {
+        It "From JSON" {
+            $UserParams.EXIFPresetName = "testSetSpecChars"
+            $test = Get-EXIFValues -UserParams $UserParams
+            $test | Should BeOfType hashtable
+            $test.EXIFArtistName | Should Be "Æ © J;n 'Daniel' Edward! . `` _"
+            $test.EXIFCopyrightText | Should Be "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
         }
     }
 }
@@ -950,7 +978,7 @@ Describe "Start-EXIFManipulation" {
             Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             Start-Sleep -Milliseconds 100
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
+            $test | Should Be 0
 
             Push-Location $BlaDrive
             foreach($i in $WorkingFiles.JPEGFullName){
@@ -964,6 +992,42 @@ Describe "Start-EXIFManipulation" {
                 $meta.YResolution           | Should Be 300
                 $meta.'By-Line'             | Should Be "Wendy Torrance"
                 $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
+                $meta.Keywords              | Should Be "Test Keyword"
+                $meta.ObjectName            | Should Be "Test ObjectName"
+                $meta.Subject               | Should Be "Test Subject"
+                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
+                $meta.Label                 | Should Be "Test Label"
+                $meta.Rating                | Should Be "4"
+                $meta.DocumentID            | Should Be $null
+            }
+            Pop-Location
+        }
+        It "©" {
+            $UserParams.InputPath = @("$BlaDrive\©Ordner")
+            $UserParams.Convert2JPEG =      1
+            $UserParams.EXIFManipulation =  1
+            $UserParams.EXIFAddCopyright =  1
+            $UserParams.EXIFPresetName =    "testSetSpecChars"
+            $UserParams.EXIFDeleteAll =     0
+            $UserParams.EXIFTransferOnly =  0
+            $WorkingFiles = Get-InputFiles -UserParams $UserParams
+            $UserParams = Get-EXIFValues -UserParams $UserParams
+            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            Start-Sleep -Milliseconds 100
+            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
+
+            Push-Location $BlaDrive
+            foreach($i in $WorkingFiles.JPEGFullName){
+                $meta = @()
+                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
+                $meta.Artist                | Should Be "Æ © J;n 'Daniel' Edward! . `` _"
+                $meta.Copyright             | Should Be "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
+                $meta.SerialNumber          | Should Be "123456789"
+                $meta.Software              | Should Be $null
+                $meta.XResolution           | Should Be 300
+                $meta.YResolution           | Should Be 300
+                $meta.'By-Line'             | Should Be "Æ © J;n 'Daniel' Edward! . `` _"
+                $meta.CopyrightNotice       | Should Be "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
                 $meta.Keywords              | Should Be "Test Keyword"
                 $meta.ObjectName            | Should Be "Test ObjectName"
                 $meta.Subject               | Should Be "Test Subject"
@@ -1178,6 +1242,15 @@ Describe "Start-Recycling" {
             $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
             $bla.Length | Should Be $WorkingFiles.Length
         }
+        It "©" {
+            $UserParams.InputPath = @("$BlaDrive\©Ordner")
+            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
+            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            $test = Start-Recycling -WorkingFiles $WorkingFiles
+            $test | Should Be 0
+            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
+            $bla.Length | Should Be $WorkingFiles.Length
+        }
         It "backtick" {
             $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
             $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
@@ -1216,3 +1289,9 @@ Describe "Start-Recycling" {
         }
     }
 }
+
+<# TODO: Mock everything to see if params call everything correctly.
+    Describe "Start-Everything" {
+
+    }
+#>

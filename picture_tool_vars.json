@@ -12,5 +12,12 @@
 			"artist_name": "John Daniel Edward Torrance",
 			"copyright_text": "All-Work-And-No-Play-Makes-Jack-A-Dull-Boy, LLC"
 		}
+	},
+	{
+		"preset": "testSetSpecChars",
+		"values": {
+			"artist_name": "Æ © J;n 'Daniel' Edward! . ` _",
+			"copyright_text": "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
+		}
 	}
 ]

@@ -394,7 +394,7 @@ Function Get-InputFiles(){
             [Parameter(Mandatory=$true)]
             [string]$BaseName
         )
-    
+
         [string]$inter = "$($Directory)\$($BaseName).jpg"
         if((Test-Path -LiteralPath $inter -PathType Leaf) -eq $true){
             [int]$k = 1
@@ -411,7 +411,7 @@ Function Get-InputFiles(){
         }else{
             [string]$result = $inter
         }
-    
+
         return $result
     }
 
@@ -517,6 +517,7 @@ Function Get-InputFiles(){
         Pause
     }
 
+    Write-ColorOut "Found $($WorkingFiles.Length) file(s)." -ForegroundColor Gray -Indentation 2
     return $WorkingFiles
 }
 
@@ -921,4 +922,4 @@ Function Start-Everything(){
     Invoke-Close -PSPID $preventstandbyid
 }
 
-Start-Everything -UserParams $UserParams
+# Start-Everything -UserParams $UserParams
