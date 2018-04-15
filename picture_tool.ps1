@@ -922,4 +922,4 @@ Function Start-Everything(){
     Invoke-Close -PSPID $preventstandbyid
 }
 
-# Start-Everything -UserParams $UserParams
+Start-Everything -UserParams $UserParams
