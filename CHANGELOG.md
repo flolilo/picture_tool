@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.4.1 - 2018-05-04
+### Changed
+ - `-EXIFManipulation` (exiftool) would stop after doing more than 114 files. Now output buffer is read asynchronously.
 
 ## 3.4 - 2018-03-28
 ### Added

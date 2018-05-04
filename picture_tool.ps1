@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.4
-        Date:       2018-03-28
+        Version:    3.4.1
+        Date:       2018-05-04
         Author:     flolilo
 
     .INPUTS
@@ -157,7 +157,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.4 - 2018-03-28"
+    $VersionNumber = "v3.4.1 - 2018-05-04"
 
 
 # ==================================================================================================
@@ -655,6 +655,8 @@ Function Start-EXIFManipulation(){
         [ValidateNotNullOrEmpty()]
         [array]$WorkingFiles = $(throw 'WorkingFiles is required by Start-EXIFManipulation')
     )
+    [int]$errorcounter = 0
+
     # DEFINITION: Create Exiftool process:
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $UserParams.EXIFtool
@@ -663,8 +665,24 @@ Function Start-EXIFManipulation(){
     $psi.RedirectStandardInput = $true
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
-    $exiftoolproc = [System.Diagnostics.Process]::Start($psi)
-    Start-Sleep -Seconds 1
+    # CREDIT: To get asymmetric buffer readout running (ak.a. unlimited processing) (1/2): https://stackoverflow.com/a/24371479/8013879
+    $exiftoolproc = New-Object -TypeName System.Diagnostics.Process
+    $exiftoolproc.StartInfo = $psi
+    # Creating string builders to store StdOut and StdErr:
+    $exiftoolStdOutBuilder = New-Object -TypeName System.Text.StringBuilder
+    $exiftoolStdErrBuilder = New-Object -TypeName System.Text.StringBuilder
+    # Adding event handers for StdOut and StdErr:
+    $exiftoolScripBlock = {
+        if(-not [String]::IsNullOrEmpty($EventArgs.Data)){
+            $Event.MessageData.AppendLine($EventArgs.Data)
+        }
+    }
+    $exiftoolStdOutEvent = Register-ObjectEvent -InputObject $exiftoolproc -Action $exiftoolScripBlock -EventName 'OutputDataReceived' -MessageData $exiftoolStdOutBuilder
+    $exiftoolStdErrEvent = Register-ObjectEvent -InputObject $exiftoolproc -Action $exiftoolScripBlock -EventName 'ErrorDataReceived' -MessageData $exiftoolStdErrBuilder
+
+    [Void]$exiftoolproc.Start()
+    $exiftoolproc.BeginOutputReadLine()
+    $exiftoolproc.BeginErrorReadLine()
 
     Write-ColorOut "$(Get-CurrentDate)  --  " -ForegroundColor Cyan -NoNewLine
     # DEFINITION: set string in correlation to mode:
@@ -717,7 +735,6 @@ Function Start-EXIFManipulation(){
     if($script:Debug -gt 0){
         [string]$debuginter = "$((Get-Location).Path)"
     }
-    [int]$errorcounter = 0
 
     # DEFINITION: Pass arguments to Exiftool:
     for($i=0; $i -lt $WorkingFiles.length; $i++){
@@ -773,14 +790,19 @@ Function Start-EXIFManipulation(){
 
         $exiftoolproc.StandardInput.WriteLine("$ArgList`n-execute`n")
     }
+    # CREDIT: To get asymmetric buffer readout running (ak.a. unlimited processing) (2/2): https://stackoverflow.com/a/24371479/8013879
+    # Close exiftool:
     $exiftoolproc.StandardInput.WriteLine("-stay_open`nFalse`n")
+    $exiftoolproc.WaitForExit()
+    # Unregistering events to retrieve process output.
+    Unregister-Event -SourceIdentifier $exiftoolStdOutEvent.Name
+    Unregister-Event -SourceIdentifier $exiftoolStdErrEvent.Name
 
-    [array]$outputerror = @($exiftoolproc.StandardError.ReadToEnd().Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries))
-    [string]$outputout = $exiftoolproc.StandardOutput.ReadToEnd()
-    $outputout = $outputout -replace '========\ ','' -replace '\[1/1]','' -replace '\ \r\n\ \ \ \ '," - " -replace '{ready}\r\n',''
+    # Read StdErr and StrOut of exiftool, then print it:
+    [array]$outputerror = @($exiftoolStdErrBuilder.ToString().Trim().Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries))
+    [string]$outputout = $exiftoolStdOutBuilder.ToString().Trim() -replace '========\ ','' -replace '\[1/1]','' -replace '\ \r\n\ \ \ \ '," - " -replace '{ready}\r\n',''
     [array]$outputout = @($outputout.Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries))
 
-    $exiftoolproc.WaitForExit()
     Write-Progress -Activity "$inter..." -Status "Complete!" -Completed
 
     for($i=0; $i -lt $WorkingFiles.length; $i++){
@@ -790,6 +812,10 @@ Function Start-EXIFManipulation(){
             $errorcounter++
         }
         Write-ColorOut "$($outputout[$i])" -ForegroundColor Yellow
+    }
+    if($exiftoolproc.ExitCode -ne 0){
+        Write-ColorOut "exiftool's exit code was not 0 (zero!)" -ForegroundColor Magenta -Indentation 2
+        $errorcounter++
     }
 
     return $errorcounter
@@ -922,4 +948,4 @@ Function Start-Everything(){
     Invoke-Close -PSPID $preventstandbyid
 }
 
-Start-Everything -UserParams $UserParams
+# Start-Everything -UserParams $UserParams
