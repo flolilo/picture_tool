@@ -1,11 +1,12 @@
 TODO:
-    [x] Seemingly, exiftool / its process routine in PoSh locks when processing > 114 files. (https://stackoverflow.com/questions/50162799) @critical @done(18-05-05 01:04)
-        [-] Split process into multiple exiftool processes, e.g. every 100 files? @cancelled(18-05-05 01:04)
-    [ ] Copy colorspace: https://photo.stackexchange.com/questions/56378
-    [ ] Provide some numbers (files found / files processed)
     [ ] Pester: Test converted pictures for bit depth/color space/interlacing @high
     [ ] Pester: Mock-Test Start-Everything @high 
         [x] At least bit depth & progressive-saving work @done(18-03-28 19:28)
+    [ ] Copy colorspace: https://photo.stackexchange.com/questions/56378
+    [ ] Provide some numbers (files found / files processed)
+    [ ] Proper formatting for exiftool's output. @low 
+    [x] Seemingly, exiftool / its process routine in PoSh locks when processing > 114 files. (https://stackoverflow.com/questions/50162799) @critical @done(18-05-05 01:04)
+    [-] Split process into multiple exiftool processes, e.g. every 100 files? @cancelled(18-05-05 01:04)
     [x] Provide a safe-mode for running exiftool the first time (will fail otherwise). @done(18-03-19 11:44)
     [x] Combine exif_transfer and picture_tool @done(18-03-13 13:22)
     [x] Clean up merging mess (a.k.a. proper documentation of parameters) @high @done(18-03-13 13:25)
