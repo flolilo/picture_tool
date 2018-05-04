@@ -1,4 +1,5 @@
-TODO for EXIF_manipulation tools:
+TODO:
+    [ ] Seemingly, exiftool / its process routine in PoSh locks when processing > 114 files. @critical 
     [ ] Provide some numbers (files found / files processed)
     [ ] Pester: Test converted pictures for bit depth/color space/interlacing @high
     [ ] Pester: Mock-Test Start-Everything @high 
