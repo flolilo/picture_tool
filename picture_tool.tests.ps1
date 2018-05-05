@@ -33,7 +33,7 @@ Describe "Test-EXEPaths" {
             Convert2SRGB =          0
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             EXIFtoolFailSafe =      1
             MagickThreads =         12
         }
@@ -68,7 +68,7 @@ Describe "Test-EXEPaths" {
             $UserParams.Convert2JPEG =          1
             $UserParams.EXIFManipulation =      0
             $UserParams.EXIFtool=               "$BlaDrive\noexiftool.exe"
-            $UserParams.Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            $UserParams.Magick =                "$BlaDrive\magick.exe"
             $test = Test-EXEPaths -UserParams $UserParams
             $test | Should BeOfType hashtable
             $test.ConvertQuality | Should Be 92
@@ -76,58 +76,31 @@ Describe "Test-EXEPaths" {
             $UserParams.Convert2JPEG =          0
             $UserParams.EXIFManipulation =      1
             $UserParams.EXIFtool=               "$BlaDrive\exiftool.exe"
-            $UserParams.Magick =                "$BlaDrive\ImageMagick\nomagick.exe"
+            $UserParams.Magick =                "$BlaDrive\nomagick.exe"
             $test = Test-EXEPaths -UserParams $UserParams
             $test | Should BeOfType hashtable
             $test.ConvertQuality | Should Be 92
         }
     }
-    Context "No problems with SpecChars" {
-        BeforeEach {
-            $UserParams.EXIFtoolFailSafe = 0
-        }
-        It "12345" {
-            $UserParams.EXIFtool = "$BlaDrive\123456789 ordner\123412356789 exiftool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "Æ" {
-            $UserParams.EXIFtool = "$BlaDrive\ÆOrdner\Æexiftool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "©" {
-            $UserParams.EXIFtool = "$BlaDrive\©Ordner\©exiftool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "backtick" {
-            $UserParams.EXIFtool = "$BlaDrive\backtick ````ordner ``\backtick ````exiftool ``.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "bracket" {
-            $UserParams.EXIFtool = "$BlaDrive\bracket [ ] ordner\bracket [ ] exiftool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "dots" {
-            $UserParams.EXIFtool = "$BlaDrive\ordner.mit.punkten\exif.tool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
-        It "specials" {
-            $UserParams.EXIFtool = "$BlaDrive\special ' ! ,; . ordner\special ' ! ,; . exiftool.exe"
-            $test = Test-EXEPaths -UserParams $UserParams
-            $test | Should BeOfType hashtable
-            $test.ConvertQuality | Should Be 92
-        }
+    It "No problems with SpecChars" {
+        $UserParams.EXIFtoolFailSafe =  0
+        $UserParams.Convert2JPEG =      1
+        $UserParams.EXIFManipulation =  1
+        $UserParams.EXIFtool = "$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©\exiftool specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©.exe"
+        $UserParams.Magick = "$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©\magick specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©.exe"
+        $test = Test-EXEPaths -UserParams $UserParams
+        $test | Should BeOfType hashtable
+        $test.ConvertQuality | Should Be 92
+    }
+    It "No problems with long paths" {
+        $UserParams.EXIFtoolFailSafe =  0
+        $UserParams.Convert2JPEG =      1
+        $UserParams.EXIFManipulation =  1
+        $UserParams.EXIFtool = "$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND\exiftool_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforEND.exe"
+        $UserParams.Magick = "$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND\magick_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_before_END.exe"
+        $test = Test-EXEPaths -UserParams $UserParams
+        $test | Should BeOfType hashtable
+        $test.ConvertQuality | Should Be 92
     }
 }
 
@@ -155,7 +128,7 @@ Describe "Get-InputFiles" {
             Convert2SRGB =          0
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             MagickThreads =         12
         }
     }
@@ -169,43 +142,43 @@ Describe "Get-InputFiles" {
         It "Return array if all is well" {
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 10
+            $test.Length | Should Be 3
         }
         It "Return array even with one item" {
             $UserParams.Formats = @("*.png")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.SourceName | Should Be "123412356789 file_PNG.png"
+            $test.SourceName | Should Be "single_PNG.png"
         }
         It "Trailing backslash does not concern the program" {
             $UserParams.InputPath = @("$BlaDrive\")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 10
+            $test.Length | Should Be 3
         }
         It "Get multiple folders" {
-            $UserParams.InputPath = @("$BlaDrive","$BlaDrive\123456789 ordner")
+            $UserParams.InputPath = @("$BlaDrive","$BlaDrive\folder_uncomplicated")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 20
+            $test.Length | Should Be 6
         }
         It "Get single file" {
-            $UserParams.InputPath = @("$BlaDrive\123412356789 file.jpg")
+            $UserParams.InputPath = @("$BlaDrive\file_uncomplicated.jpg")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
             $test.Length | Should Be 1
         }
         It "Get multiple files" {
-            $UserParams.InputPath = @("$BlaDrive\123412356789 file.jpg","$BlaDrive\file.with.dots.jpg")
+            $UserParams.InputPath = @("$BlaDrive\file_uncomplicated.jpg","$BlaDrive\folder_uncomplicated\file_uncomplicated.jpg")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
             $test.Length | Should Be 2
         }
         It "Get mixed content" {
-            $UserParams.InputPath = @("$BlaDrive","$BlaDrive\123412356789 file.jpg")
+            $UserParams.InputPath = @("$BlaDrive","$BlaDrive\file_uncomplicated.jpg")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 11
+            $test.Length | Should Be 4
         }
         It "Non-existing files/folders work" {
             $UserParams.InputPath = @("$BlaDrive\nofile.jpg")
@@ -224,49 +197,17 @@ Describe "Get-InputFiles" {
             $test.Length | Should Be 0
         }
     }
-    Context "No problems with SpecChars" {
-        It "12345" {
-            $UserParams.InputPath = @("$BlaDrive\123456789 ordner")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "Æ" {
-            $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "©" {
-            $UserParams.EXIFtool = "$BlaDrive\©Ordner"
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "backtick" {
-            $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "bracket" {
-            $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "dots" {
-            $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
-        It "specials" {
-            $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
-            $test = @(Get-InputFiles -UserParams $UserParams)
-            ,$test | Should BeOfType array
-            $test.Length | Should Be 10
-        }
+    It "No problems with SpecChars" {
+        $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©")
+        $test = @(Get-InputFiles -UserParams $UserParams)
+        ,$test | Should BeOfType array
+        $test.Length | Should Be 3
+    }
+    It "No problems with long folder" {
+        $UserParams.InputPath = @("$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND")
+        $test = @(Get-InputFiles -UserParams $UserParams)
+        ,$test | Should BeOfType array
+        $test.Length | Should Be 3
     }
 }
 
@@ -287,7 +228,7 @@ Describe "Start-Converting" {
             Convert2SRGB =          0
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             MagickThreads =         12
         }
     }
@@ -304,8 +245,9 @@ Describe "Start-Converting" {
         It "Return no errors if all goes well" {
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            $test | Should BeOfType int
             $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 6
             $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
             $bla | ForEach-Object {
                 if($WorkingFiles.SourceFullName -notcontains $_){
@@ -314,13 +256,19 @@ Describe "Start-Converting" {
             }
         }
         It "Work with all settings" {
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $UserParams.Convert2SRGB =      1
             $UserParams.ConvertQuality =    10
             $UserParams.ConvertScaling =    10
+            $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
+
             Push-Location $BlaDrive
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             foreach($i in $WorkingFiles.JPEGFullName){
                 $meta = @()
                 $meta = @(.\exiftool.exe "$i" -All:All -J | ConvertFrom-Json)
@@ -330,7 +278,7 @@ Describe "Start-Converting" {
                 $meta.BitsPerSample     | Should Be "8"
             }
             Pop-Location
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
+            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 6
             $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
             $bla | ForEach-Object {
                 if($WorkingFiles.SourceFullName -notcontains $_){
@@ -342,60 +290,23 @@ Describe "Start-Converting" {
             Mock Start-Process {throw}
             $WorkingFiles = Get-InputFiles -UserParams $UserParams
             $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 10
-            Assert-MockCalled Start-Process -Times 9
+            $test | Should Be 3
+            Assert-MockCalled Start-Process -Times 3
         }
     }
-    Context "No problems with SpecChars" {
-        It "12345" {
-            $UserParams.InputPath = @("$BlaDrive\123456789 ordner")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "Æ" {
-            $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "©" {
-            $UserParams.InputPath = @("$BlaDrive\©Ordner")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "backtick" {
-            $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "bracket" {
-            $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "dots" {
-            $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
-        It "specials" {
-            $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 20
-        }
+    It "No problems with SpecChars" {
+        $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©")
+        $WorkingFiles = Get-InputFiles -UserParams $UserParams
+        $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test | Should Be 0
+        (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 6
+    }
+    It "No problems with long paths" {
+        $UserParams.InputPath = @("$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND")
+        $WorkingFiles = Get-InputFiles -UserParams $UserParams
+        $test = Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test | Should Be 0
+        (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 6
     }
 }
 
@@ -423,7 +334,7 @@ Describe "Get-EXIFValues" {
             Convert2SRGB =          0
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             MagickThreads =         12
         }
     }
@@ -487,7 +398,7 @@ Describe "Start-EXIFManipulation" {
 
     BeforeEach {
         [hashtable]$UserParams = @{
-            InputPath =             @("$BlaDrive\123412356789 file.jpg")
+            InputPath =             @("$BlaDrive\file_uncomplicated.jpg")
             Convert2JPEG =          1
             EXIFManipulation =      1
             EXIFTransferOnly =      0
@@ -502,7 +413,7 @@ Describe "Start-EXIFManipulation" {
             Convert2SRGB =          0
             ConvertScaling =        100
             EXIFtool=               "$BlaDrive\exiftool.exe"
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             MagickThreads =         12
         }
     }
@@ -521,7 +432,50 @@ Describe "Start-EXIFManipulation" {
             $UserParams = Get-EXIFValues -UserParams $UserParams
             Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
+            $test | Should Be 0
+        }
+        It "Works with hundreds of files" {
+            # $script:Debug = 1
+            $UserParams.InputPath = @("$BlaDrive\hundreds_of_files")
+            $UserParams.Convert2JPEG =      1
+            $UserParams.EXIFManipulation =  1
+            $UserParams.EXIFAddCopyright =  1
+            $UserParams.EXIFDeleteAll =     0
+            $UserParams.EXIFTransferOnly =  0
+            $WorkingFiles = Get-InputFiles -UserParams $UserParams
+            $UserParams = Get-EXIFValues -UserParams $UserParams
+            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            Start-Sleep -Milliseconds 100
+            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
+            $test | Should Be 0
+
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
+            Push-Location $BlaDrive
+            Write-Host "Testing values..." -ForegroundColor DarkCyan
+            foreach($i in $WorkingFiles.JPEGFullName){
+                $meta = @()
+                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
+                $meta.Artist                | Should Be "Wendy Torrance"
+                $meta.Copyright             | Should Be "Room 237 Enterprises"
+                $meta.SerialNumber          | Should Be "123456789"
+                $meta.Software              | Should Be $null
+                $meta.XResolution           | Should Be 300
+                $meta.YResolution           | Should Be 300
+                $meta.'By-Line'             | Should Be "Wendy Torrance"
+                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
+                $meta.Keywords              | Should Be "Test Keyword"
+                $meta.ObjectName            | Should Be "Test ObjectName"
+                $meta.Subject               | Should Be "Test Subject"
+                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
+                $meta.Label                 | Should Be "Test Label"
+                $meta.Rating                | Should Be "4"
+                $meta.DocumentID            | Should Be $null
+            }
+            Pop-Location
         }
     }
     Context "Transfer" {
@@ -532,6 +486,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -566,6 +525,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = @(.\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json)
             Pop-Location
@@ -599,6 +563,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -632,6 +601,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -665,6 +639,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -698,6 +677,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -734,6 +718,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -768,6 +757,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -802,6 +796,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -836,6 +835,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -870,6 +874,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -904,6 +913,11 @@ Describe "Start-EXIFManipulation" {
             $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
             $test | Should Be 0
 
+            $WorkingFiles | ForEach-Object {
+                if($_.JPEGShortName -ne "ZYX"){
+                    $_.JPEGFullName = $_.JPEGShortName
+                }
+            }
             Push-Location $BlaDrive
             $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
             Pop-Location
@@ -926,263 +940,91 @@ Describe "Start-EXIFManipulation" {
             Remove-Item -LiteralPath $WorkingFiles.SourceFullName
         }
     }
-    Context "No problems with SpecChars" {
-        It "12345" {
-            # $script:Debug = 1
-            $UserParams.InputPath = @("$BlaDrive\123456789 ordner\Æfile.jpg","$BlaDrive\123456789 ordner\Æfile_1.jpg")
-            $UserParams.InputPath = @("$BlaDrive\123456789 ordner")
-            # TODO: Interestingly, either file works on its own, but not both together...
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
+    It "No problems with SpecChars" {
+        # $script:Debug = 1
+        $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©","$BlaDrive\file specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©.jpg")
+        # TODO: Interestingly, either file works on its own, but not both together...
+        $UserParams.Convert2JPEG =      1
+        $UserParams.EXIFManipulation =  1
+        $UserParams.EXIFAddCopyright =  1
+        $UserParams.EXIFDeleteAll =     0
+        $UserParams.EXIFTransferOnly =  0
+        $WorkingFiles = Get-InputFiles -UserParams $UserParams
+        $UserParams = Get-EXIFValues -UserParams $UserParams
+        Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        Start-Sleep -Milliseconds 100
+        $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test | Should Be 0
 
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Wendy Torrance"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Wendy Torrance"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
-                }
-            Pop-Location
-        }
-        It "Æ" {
-            $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Wendy Torrance"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Wendy Torrance"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
+        $WorkingFiles | ForEach-Object {
+            if($_.JPEGShortName -ne "ZYX"){
+                $_.JPEGFullName = $_.JPEGShortName
             }
-            Pop-Location
         }
-        It "©" {
-            $UserParams.InputPath = @("$BlaDrive\©Ordner")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFPresetName =    "testSetSpecChars"
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Æ © J;n 'Daniel' Edward! . `` _"
-                $meta.Copyright             | Should Be "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Æ © J;n 'Daniel' Edward! . `` _"
-                $meta.CopyrightNotice       | Should Be "All-Work-And-No-Play-Makes-A-Dull-Boy, [LLC]"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
+        Push-Location $BlaDrive
+        foreach($i in $WorkingFiles.JPEGFullName){
+            $meta = @()
+            $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
+            $meta.Artist                | Should Be "Wendy Torrance"
+            $meta.Copyright             | Should Be "Room 237 Enterprises"
+            $meta.SerialNumber          | Should Be "123456789"
+            $meta.Software              | Should Be $null
+            $meta.XResolution           | Should Be 300
+            $meta.YResolution           | Should Be 300
+            $meta.'By-Line'             | Should Be "Wendy Torrance"
+            $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
+            $meta.Keywords              | Should Be "Test Keyword"
+            $meta.ObjectName            | Should Be "Test ObjectName"
+            $meta.Subject               | Should Be "Test Subject"
+            $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
+            $meta.Label                 | Should Be "Test Label"
+            $meta.Rating                | Should Be "4"
+            $meta.DocumentID            | Should Be $null
             }
-            Pop-Location
-        }
-        It "backtick" {
-            $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFArtistName = "Æsildur"
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0
+        Pop-Location
+    }
+    It "No problem with long paths" {
+        # $script:Debug = 1
+        $UserParams.InputPath = @("$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND","$BlaDrive\file_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_before_thEND.jpg")
+        # TODO: Interestingly, either file works on its own, but not both together...
+        $UserParams.Convert2JPEG =      1
+        $UserParams.EXIFManipulation =  1
+        $UserParams.EXIFAddCopyright =  1
+        $UserParams.EXIFDeleteAll =     0
+        $UserParams.EXIFTransferOnly =  0
+        $WorkingFiles = Get-InputFiles -UserParams $UserParams
+        $UserParams = Get-EXIFValues -UserParams $UserParams
+        Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        Start-Sleep -Milliseconds 100
+        $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test | Should Be 0
 
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Æsildur"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Æsildur"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $nulll
+        $WorkingFiles | ForEach-Object {
+            if($_.JPEGShortName -ne "ZYX"){
+                $_.JPEGFullName = $_.JPEGShortName
             }
-            Pop-Location
         }
-        It "bracket" {
-            $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
-
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Wendy Torrance"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Wendy Torrance"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
+        Push-Location $BlaDrive
+        foreach($i in $WorkingFiles.JPEGFullName){
+            $meta = @()
+            $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
+            $meta.Artist                | Should Be "Wendy Torrance"
+            $meta.Copyright             | Should Be "Room 237 Enterprises"
+            $meta.SerialNumber          | Should Be "123456789"
+            $meta.Software              | Should Be $null
+            $meta.XResolution           | Should Be 300
+            $meta.YResolution           | Should Be 300
+            $meta.'By-Line'             | Should Be "Wendy Torrance"
+            $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
+            $meta.Keywords              | Should Be "Test Keyword"
+            $meta.ObjectName            | Should Be "Test ObjectName"
+            $meta.Subject               | Should Be "Test Subject"
+            $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
+            $meta.Label                 | Should Be "Test Label"
+            $meta.Rating                | Should Be "4"
+            $meta.DocumentID            | Should Be $null
             }
-            Pop-Location
-        }
-        It "dots" {
-            $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
-
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Wendy Torrance"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Wendy Torrance"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
-            }
-            Pop-Location
-        }
-        It "specials" {
-            $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
-            $UserParams.Convert2JPEG =      1
-            $UserParams.EXIFManipulation =  1
-            $UserParams.EXIFAddCopyright =  1
-            $UserParams.EXIFDeleteAll =     0
-            $UserParams.EXIFTransferOnly =  0
-            $WorkingFiles = Get-InputFiles -UserParams $UserParams
-            $UserParams = Get-EXIFValues -UserParams $UserParams
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            Start-Sleep -Milliseconds 100
-            $test = Start-EXIFManipulation -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test | Should Be 0 # TODO: Æ (U+00C6) is failing!
-
-            Push-Location $BlaDrive
-            foreach($i in $WorkingFiles.JPEGFullName){
-                $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
-                $meta.Artist                | Should Be "Wendy Torrance"
-                $meta.Copyright             | Should Be "Room 237 Enterprises"
-                $meta.SerialNumber          | Should Be "123456789"
-                $meta.Software              | Should Be $null
-                $meta.XResolution           | Should Be 300
-                $meta.YResolution           | Should Be 300
-                $meta.'By-Line'             | Should Be "Wendy Torrance"
-                $meta.CopyrightNotice       | Should Be "Room 237 Enterprises"
-                $meta.Keywords              | Should Be "Test Keyword"
-                $meta.ObjectName            | Should Be "Test ObjectName"
-                $meta.Subject               | Should Be "Test Subject"
-                $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
-                $meta.Label                 | Should Be "Test Label"
-                $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
-            }
-            Pop-Location
-        }
+        Pop-Location
     }
 }
 
@@ -1202,7 +1044,7 @@ Describe "Start-Recycling" {
             ConvertRemoveSource =   1
             Convert2SRGB =          0
             ConvertScaling =        50
-            Magick =                "$BlaDrive\ImageMagick\magick.exe"
+            Magick =                "$BlaDrive\magick.exe"
             MagickThreads =         12
         }
     }
@@ -1223,70 +1065,23 @@ Describe "Start-Recycling" {
             $bla.Length | Should Be $WorkingFiles.Length
         }
     }
-    Context "No problems with SpecChars" {
-        It "12345" {
-            $UserParams.InputPath = @("$BlaDrive\123456789 ordner")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "Æ" {
-            $UserParams.InputPath = @("$BlaDrive\ÆOrdner")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "©" {
-            $UserParams.InputPath = @("$BlaDrive\©Ordner")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "backtick" {
-            $UserParams.InputPath = @("$BlaDrive\backtick ````ordner ``")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "bracket" {
-            $UserParams.InputPath = @("$BlaDrive\bracket [ ] ordner")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem -LiteralPath $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "dots" {
-            $UserParams.InputPath = @("$BlaDrive\ordner.mit.punkten")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
-        It "specials" {
-            $UserParams.InputPath = @("$BlaDrive\special ' ! ,; . ordner")
-            $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
-            Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
-            $test = Start-Recycling -WorkingFiles $WorkingFiles
-            $test | Should Be 0
-            $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
-            $bla.Length | Should Be $WorkingFiles.Length
-        }
+    It "No problems with SpecChars" {
+        $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©","$BlaDrive\file specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©.jpeg")
+        $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
+        Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test = Start-Recycling -WorkingFiles $WorkingFiles
+        $test | Should Be 0
+        $bla = (Get-ChildItem -LiteralPath $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
+        $bla.Length | Should Be $WorkingFiles.Length
+    }
+    It "No problems with long paths" {
+        $UserParams.InputPath = @("$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND")
+        $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
+        Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        $test = Start-Recycling -WorkingFiles $WorkingFiles
+        $test | Should Be 0
+        $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
+        $bla.Length | Should Be $WorkingFiles.Length
     }
 }
 
