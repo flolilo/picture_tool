@@ -4,6 +4,10 @@ TODO:
         [x] At least bit depth & progressive-saving work @done(18-03-28 19:28)
     [ ] Copy colorspace: https://photo.stackexchange.com/questions/56378
     [ ] Provide some numbers (files found / files processed)
+    [ ] create multiple exiftool processes
+    [x] exiftool arguments: first go to `if`, then go to `for`. also, use an `array` for arguments. @done(18-05-05 13:11)
+    [ ] Add drag and drop support
+    [ ] Change from returning `$false` to `throw`
     [ ] Proper formatting for exiftool's output. @low 
     [x] Seemingly, exiftool / its process routine in PoSh locks when processing > 114 files. (https://stackoverflow.com/questions/50162799) @critical @done(18-05-05 01:04)
     [-] Split process into multiple exiftool processes, e.g. every 100 files? @cancelled(18-05-05 01:04)

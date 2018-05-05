@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## 3.4.2 - 2018-05-05
+### Changed
+ - Increased speed of exiftool's argument-creation (swapped `for` and `if`)
+ - Removed `$debuginter` and filled in its value into the corresponding `Write-Colorout`s.
+ - Renamed `$ArgList` to `$magickArgList` and `$exiftoolArgList`, so I can properly search for them.
+
+
 ## 3.4.1 - 2018-05-04
 ### Changed
  - `-EXIFManipulation` (exiftool) would stop after doing more than 114 files. Now output buffer is read asynchronously.
+
 
 ## 3.4 - 2018-03-28
 ### Added
