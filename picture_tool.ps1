@@ -6,7 +6,7 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.4.4
+        Version:    3.4.5
         Date:       2018-05-05
         Author:     flolilo
 
@@ -157,7 +157,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.4.4 - 2018-05-05"
+    $VersionNumber = "v3.4.5 - 2018-05-05"
 
 
 # ==================================================================================================
@@ -937,6 +937,9 @@ Function Start-EXIFManipulation(){
             $k = ($exiftoolInstanceCount - 1)
         }
     }
+    Write-Progress -Activity "$choiceString..." -Status "Complete!" -Completed
+
+    Write-ColorOut "Close exiftool down..." -ForegroundColor DarkGray -Indentation 2
 
     # CREDIT: To get asymmetric buffer readout running (ak.a. unlimited processing) (2/2): https://stackoverflow.com/a/24371479/8013879
     [array]$outputerror = @()
@@ -961,22 +964,23 @@ Function Start-EXIFManipulation(){
 
         # Read StdErr and StrOut of exiftool, then print it:
         $outputerror += @($exiftoolStdErrBuilder[$i].ToString().Trim().Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries))
-        $outputout += @($($exiftoolStdOutBuilder[$i].ToString().Trim().Replace("======== ","").Replace("[1/1]",'').Replace(" `r`n    "," - ").Replace("{ready}`r`n","").Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries)))
+        $outputout += @($($exiftoolStdOutBuilder[$i].ToString().Trim().Replace("======== ","").Replace("[1/1]",'').Replace("{ready}","").Replace("1 image files updated","").Replace("  ","").Replace("  ","").Replace("`r`n`r`n","").Split("`r`n",[System.StringSplitOptions]::RemoveEmptyEntries)))
         if($exiftoolproc[$i].ExitCode -ne 0){
             Write-ColorOut "exiftool #$i's exit code was not 0 (zero)!" -ForegroundColor Magenta -Indentation 2
             $errorcounter++
         }
     }
 
-    Write-Progress -Activity "$choiceString..." -Status "Complete!" -Completed
-
-    for($i=0; $i -lt $WorkingFiles.Length; $i++){
-        Write-ColorOut "$($WorkingFiles[$i].SourceName):`t" -ForegroundColor Gray -NoNewLine -Indentation 2
+    foreach($i in $outputerror){
         if($outputerror[$i].Length -gt 0){
             Write-ColorOut "$($outputerror[$i])`t" -ForegroundColor Red -NoNewline
             $errorcounter++
         }
-        Write-ColorOut "$($outputout[$i])" -ForegroundColor Yellow
+    }
+    foreach($i in $outputout){
+        if($outputout[$i].Length -gt 0){
+            Write-ColorOut "$($outputout[$i])" -ForegroundColor Yellow
+        }
     }
 
     Write-ColorOut "Successfully manipulated $successcounter file(s)." -ForegroundColor Gray -Indentation 2
@@ -1039,7 +1043,7 @@ Function Start-Everything(){
     )
     Write-ColorOut "                                              A" -BackgroundColor DarkGray -ForegroundColor DarkGray
     Write-ColorOut "        flolilo's XYZ to JPEG converter        " -ForegroundColor DarkCyan -BackgroundColor Gray
-    Write-ColorOut "               $script:VersionNumber               " -ForegroundColor DarkCyan -BackgroundColor Gray
+    Write-ColorOut "             $script:VersionNumber               " -ForegroundColor DarkCyan -BackgroundColor Gray
     Write-ColorOut "(PID = $("{0:D8}" -f $pid))                               `r`n" -ForegroundColor Gray -BackgroundColor DarkGray
     $Host.UI.RawUI.WindowTitle = "XYZ to JPEG converter $script:VersionNumber"
 

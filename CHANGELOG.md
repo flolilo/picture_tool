@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 
+## 3.4.5 - 2018-05-05
+### Changed
+ - Prettierr (a.k.a. less) output from `Start-EXIFManipulation()`.
+
+
 ## 3.4.4 - 2018-05-05
 ### Changed
  - Pester-tests and the test-files: less tests, but more thorough. Tested more specChars and also started to test fore long file paths.
@@ -12,8 +17,8 @@ All notable changes to this project will be documented in this file.
 ### Added
  - `Start-Converting()` prints how many converts were succesful now.
  - `Get-EXIFValues()` prints `Artist` and `Copyright` information now.
- - `Start-EXIFManipulation` prints how many manipulations were succesful now.
- - `Start-Recycling` prints how many deletions were succesful now.
+ - `Start-EXIFManipulation()` prints how many manipulations were succesful now.
+ - `Start-Recycling()` prints how many deletions were succesful now.
  - Support for long file paths.
 
 
