@@ -1,8 +1,9 @@
 Todo:
     [ ] Pester: Test converted pictures for bit depth | color space | interlacing @high
+    [ ] Copy colorspace when converting with ImageMagick: https://photo.stackexchange.com/questions/56378
+        [ ] Add TESTIMAGES test images for this, testing multiple color profiles.
     [ ] Pester: Mock-Test Start-Everything @high 
         [x] At least bit depth & progressive-saving work @done(18-03-28 19:28)
-    [ ] Copy colorspace when converting with ImageMagick: https://photo.stackexchange.com/questions/56378
     [ ] Add drag and drop support for files.
     [ ] Change from returning `$false` to `throw` if something goes wrong. @low 
     [ ] Proper formatting for exiftool's output. @low 
