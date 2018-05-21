@@ -197,6 +197,9 @@ Describe "Get-InputFiles" {
             $test.Length | Should Be 0
         }
     }
+    It "Get -Format files as result files, get all others as source files (-EXIFTransferOnly)" {
+        # TODO: Write test. add files for it.
+    }
     It "No problems with SpecChars" {
         $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©")
         $test = @(Get-InputFiles -UserParams $UserParams)
