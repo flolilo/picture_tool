@@ -1,6 +1,14 @@
 # picture_tool
 **A tool that works with [ExifTool](https://sno.phy.queensu.ca/~phil/exiftool/) and [ImageMagick](https://www.imagemagick.org/) to let you convert pictures to JPEG and/or transfer metadata. Also, processed files can be moved to the Recycle Bin with [bdukes's `Remove-ItemSafely`](https://github.com/bdukes/PowerShellModules/tree/master/Recycle).**
 
+
+## Need help with the script?
+
+```powershell
+    # Simply start its help:
+    Get-Help .\picture_tool.ps1 -Detailed
+```
+
 ## Unit testing completed!
 
 All non-generic commands are tested to their extremes with Pester - unicode-signs, brackets, spaces - nothing should break this code now!
