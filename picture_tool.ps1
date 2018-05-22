@@ -177,11 +177,11 @@ param(
 Function Write-ColorOut(){
     <#
         .SYNOPSIS
-            A faster version of Write-ColorOut
+            A faster version of Write-Host
         .DESCRIPTION
             Using the [Console]-commands to make everything faster.
         .NOTES
-            Date: 2018-03-12
+            Date: 2018-05-22
         
         .PARAMETER Object
             String to write out
@@ -193,7 +193,7 @@ Function Write-ColorOut(){
             When enabled, no line-break will be created.
 
         .EXAMPLE
-            Just use it like Write-ColorOut.
+            Just use it like Write-Host.
     #>
     param(
         [string]$Object = "Write-ColorOut was called, but no string was transfered.",
