@@ -70,7 +70,11 @@
         1 stops after each step, 2 additionally outputs some commands.
 
     .EXAMPLE
-        XYZtoJPEG -InputPath D:\MyImages -Formats @("*.jpg","*.tif") -ConvertQuality 70 -ConvertRemoveSource 0 -Convert2SRGB 0
+        Convert all BMPs and TIFFs in D:\MyImages to JPEG with a quality setting of 70. Do not convert to sRGB, do not remove the source files afterwards:
+        .\picture_tool.ps1 -InputPath D:\MyImages -Formats @("*.bmp","*.tif") -Convert2JPEG 1 -ConvertQuality 70 -ConvertRemoveSource 0 -Convert2SRGB 0
+    .EXAMPLE
+        Convert, then add some EXIF information:
+        .\picture_tool.ps1 -InputPath D:\MyImages -Formats @("*.tif") -Convert2JPEG 1 -ConvertQuality 70 -EXIFManipulation 1 -EXIFAddCopyright 1 -EXIFArtistName "John Doe" -EXIFCopyrightText "(C) 2018"
 #>
 param(
     [ValidateNotNullOrEmpty()]
