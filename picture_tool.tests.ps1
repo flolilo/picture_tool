@@ -9,6 +9,9 @@
 
 . $PSScriptRoot\picture_tool.ps1
 
+Write-Host "The 7z - file from GitHub only includes dummy-versions of the EXE-files (e.g. magick.exe, exiftool.exe). Please replace them before testing!" -ForegroundColor Magenta
+Pause
+
 Describe "Test-EXEPaths" {
     $BlaDrive = "$TestDrive\TEST"
     New-Item -ItemType Directory -Path $BlaDrive
