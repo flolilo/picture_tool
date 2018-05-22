@@ -160,7 +160,7 @@ Describe "Get-InputFiles" {
             $UserParams.InputPath = @("$BlaDrive","$BlaDrive\folder_uncomplicated")
             $test = @(Get-InputFiles -UserParams $UserParams)
             ,$test | Should BeOfType array
-            $test.Length | Should Be 6
+            $test.Length | Should Be 7
         }
         It "Get single file" {
             $UserParams.InputPath = @("$BlaDrive\file_uncomplicated.jpg")
@@ -198,7 +198,15 @@ Describe "Get-InputFiles" {
         }
     }
     It "Get -Format files as result files, get all others as source files (-EXIFTransferOnly)" {
-        # TODO: Write test. add files for it.
+        $UserParams.Convert2JPEG = 0
+        $UserParams.EXIFTransferOnly = 1
+        $UserParams.InputPath = @("$BlaDrive\folder_uncomplicated")
+
+        $test = @(Get-InputFiles -UserParams $UserParams)
+        $test.SourceFullName | Should -Not -Match '.file_notintransfer\.webp$'
+        $test.SourceFullName | Should -Not -Match '.file_notintransfer\.tif$'
+        $test.SourceFullName | Should -Match '.file_intransfer\.tif$'
+        $test.SourceFullName | Should -Not -Match '.file_intransfer\.jpg$'
     }
     It "No problems with SpecChars" {
         $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©")
@@ -251,10 +259,12 @@ Describe "Start-Converting" {
             $test | Should BeOfType int
             $test | Should Be 0
             (Get-ChildItem -LiteralPath "$($UserParams.InputPath)\" -Filter $UserParams.Formats[1]).count | Should Be 6
-            $bla = (Get-InputFiles -UserParams $UserParams).SourceFullName
+            $bla = (Get-ChildItem -LiteralPath $UserParams.InputPath -Filter $UserParams.Formats[1]).FullName
             $bla | ForEach-Object {
                 if($WorkingFiles.SourceFullName -notcontains $_){
-                    Remove-Item -LiteralPath $_
+                    Remove-Item -LiteralPath $_ -Verbose
+                }else{
+                    Write-Host "Stay $($_)"
                 }
             }
         }
@@ -268,11 +278,11 @@ Describe "Start-Converting" {
 
             Push-Location $BlaDrive
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
-            foreach($i in $WorkingFiles.JPEGFullName){
+            foreach($i in $WorkingFiles.ResultFullName){
                 $meta = @()
                 $meta = @(.\exiftool.exe "$i" -All:All -J | ConvertFrom-Json)
                 $meta.EncodingProcess   | Should Be "Progressive DCT, Huffman coding"
@@ -453,15 +463,16 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
             Write-Host "Testing values..." -ForegroundColor DarkCyan
-            foreach($i in $WorkingFiles.JPEGFullName){
+            # set for-loop to check each 20th file, as calling exiftool once per file takes forever.
+            for($i=0; $i -le $($WorkingFiles.ResultFullName.Length - 20); $i+=20){
                 $meta = @()
-                $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
+                $meta = @(.\exiftool.exe "$($WorkingFiles.ResultFullName[$i])" -J | ConvertFrom-Json)
                 $meta.Artist                | Should Be "Wendy Torrance"
                 $meta.Copyright             | Should Be "Room 237 Enterprises"
                 $meta.SerialNumber          | Should Be "123456789"
@@ -490,12 +501,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Test Artist"
             $meta.Copyright             | Should Be "Test Copyright"
@@ -513,7 +524,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be "4"
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "transfer + add copyright" {
             $UserParams.Convert2JPEG =      1
@@ -529,12 +540,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = @(.\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json)
+            $meta = @(.\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json)
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -552,7 +563,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be "4"
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "transfer + delete non-cam" {
             $UserParams.Convert2JPEG =      1
@@ -567,12 +578,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Test Artist"
             $meta.Copyright             | Should Be "Test Copyright"
@@ -590,7 +601,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "transfer + delete non-cam + add copyright" {
             $UserParams.Convert2JPEG =      1
@@ -605,12 +616,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -628,7 +639,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
             
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "delete all" {
             $UserParams.Convert2JPEG =      1
@@ -643,12 +654,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be $null
             $meta.Copyright             | Should Be $null
@@ -666,7 +677,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "delete all + add copyright" {
             $UserParams.Convert2JPEG =      1
@@ -681,12 +692,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.JPEGFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -704,7 +715,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.JPEGFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
     }
     Context "Modify" {
@@ -722,12 +733,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Test Artist"
             $meta.Copyright             | Should Be "Test Copyright"
@@ -745,7 +756,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be "4"
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "modify (add copyright)" {
             Copy-Item -Path $UserParams.InputPath[0] -Destination $BlaDrive\bla.jpg -Force
@@ -761,12 +772,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -784,7 +795,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be "4"
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "modify (delete non-cam)" {
             Copy-Item -Path $UserParams.InputPath[0] -Destination $BlaDrive\bla.jpg
@@ -800,12 +811,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Test Artist"
             $meta.Copyright             | Should Be "Test Copyright"
@@ -823,7 +834,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "modify (delete non-cam + add copyright)" {
             Copy-Item -Path $UserParams.InputPath[0] -Destination $BlaDrive\bla.jpg -Force
@@ -839,12 +850,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -862,7 +873,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "modify (delete all)" {
             Copy-Item -Path $UserParams.InputPath[0] -Destination $BlaDrive\bla.jpg
@@ -878,12 +889,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be $null
             $meta.Copyright             | Should Be $null
@@ -901,7 +912,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "modify (delete all + add copyright)" {
             Copy-Item -Path $UserParams.InputPath[0] -Destination $BlaDrive\bla.jpg
@@ -917,12 +928,12 @@ Describe "Start-EXIFManipulation" {
             $test | Should Be 0
 
             $WorkingFiles | ForEach-Object {
-                if($_.JPEGShortName -ne "ZYX"){
-                    $_.JPEGFullName = $_.JPEGShortName
+                if($_.ResultShortName -ne "ZYX"){
+                    $_.ResultFullName = $_.ResultShortName
                 }
             }
             Push-Location $BlaDrive
-            $meta = .\exiftool.exe "$($WorkingFiles.SourceFullName)" -J | ConvertFrom-Json
+            $meta = .\exiftool.exe "$($WorkingFiles.ResultFullName)" -J | ConvertFrom-Json
             Pop-Location
             $meta.Artist                | Should Be "Wendy Torrance"
             $meta.Copyright             | Should Be "Room 237 Enterprises"
@@ -940,7 +951,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
 
-            Remove-Item -LiteralPath $WorkingFiles.SourceFullName
+            Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
     }
     It "No problems with SpecChars" {
@@ -960,12 +971,12 @@ Describe "Start-EXIFManipulation" {
         $test | Should Be 0
 
         $WorkingFiles | ForEach-Object {
-            if($_.JPEGShortName -ne "ZYX"){
-                $_.JPEGFullName = $_.JPEGShortName
+            if($_.ResultShortName -ne "ZYX"){
+                $_.ResultFullName = $_.ResultShortName
             }
         }
         Push-Location $BlaDrive
-        foreach($i in $WorkingFiles.JPEGFullName){
+        foreach($i in $WorkingFiles.ResultFullName){
             $meta = @()
             $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
             $meta.Artist                | Should Be "Wendy Torrance"
@@ -1003,12 +1014,12 @@ Describe "Start-EXIFManipulation" {
         $test | Should Be 0
 
         $WorkingFiles | ForEach-Object {
-            if($_.JPEGShortName -ne "ZYX"){
-                $_.JPEGFullName = $_.JPEGShortName
+            if($_.ResultShortName -ne "ZYX"){
+                $_.ResultFullName = $_.ResultShortName
             }
         }
         Push-Location $BlaDrive
-        foreach($i in $WorkingFiles.JPEGFullName){
+        foreach($i in $WorkingFiles.ResultFullName){
             $meta = @()
             $meta = @(.\exiftool.exe "$i" -J | ConvertFrom-Json)
             $meta.Artist                | Should Be "Wendy Torrance"
@@ -1058,11 +1069,12 @@ Describe "Start-Recycling" {
             {Start-Recycling -WorkingFiles @()} | Should Throw
         }
         It "Return no errors if all goes well" {
-            # TODO: Recycle.psm1 needs to have -LiteralPath at Get-Item to get working!
             # $script:Debug = 1
             $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
             Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+            Mock Read-Host {1}
             $test = Start-Recycling -WorkingFiles $WorkingFiles
+            Assert-MockCalled Read-Host -Times 1
             $test | Should Be 0
             $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
             $bla.Length | Should Be $WorkingFiles.Length
@@ -1072,7 +1084,9 @@ Describe "Start-Recycling" {
         $UserParams.InputPath = @("$BlaDrive\folder specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©","$BlaDrive\file specChar.(]){[}à°^âaà`````$öäüß'#!%&=´@€+,;-Æ©.jpeg")
         $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
         Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        Mock Read-Host {1}
         $test = Start-Recycling -WorkingFiles $WorkingFiles
+        Assert-MockCalled Read-Host -Times 1
         $test | Should Be 0
         $bla = (Get-ChildItem -LiteralPath $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
         $bla.Length | Should Be $WorkingFiles.Length
@@ -1081,7 +1095,9 @@ Describe "Start-Recycling" {
         $UserParams.InputPath = @("$BlaDrive\folder_with_long_name_to_exceed_characters_regrets_collect_like_old_friends_here_to_relive_your_darkest_moments_all_of_the_ghouls_come_out_to_play_every_demon_wants_his_pound_of_flesh_i_like_to_keep_some_things_to_myself_it_s_always_darkest_beforeEND")
         $WorkingFiles = @(Get-InputFiles -UserParams $UserParams)
         Start-Converting -UserParams $UserParams -WorkingFiles $WorkingFiles
+        Mock Read-Host {1}
         $test = Start-Recycling -WorkingFiles $WorkingFiles
+        Assert-MockCalled Read-Host -Times 3
         $test | Should Be 0
         $bla = (Get-ChildItem $UserParams.InputPath[0] -Filter *.jpg -File).Fullname
         $bla.Length | Should Be $WorkingFiles.Length
