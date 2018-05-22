@@ -7,7 +7,7 @@
 /movies/*
 .vscode/*
 /*TESTFILES/*
-# picture_tool_TESTFILES.7z
+picture_tool_TESTFILES.7z
 !picture_tool_TESTFILES_WEB.7z
 
 # DEFINITION: ignore file that's in the repo
