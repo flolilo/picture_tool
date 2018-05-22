@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## 3.4.6 - 2018-05-22
+### Changed
+ - `$WorkingFiles` no longer gets piped, but got its own `for`-loops. Should make things faster.
+ - **Fixed Issue #1**: Changed behavior of `Get-InputFiles()` when `-EXIFTransferOnly` is enabled. Now, it will look for other files with the same basename as the files found by `-Formats` (vs. two files with same basename will get into `$WorkingFiles` even when their forat is not specified / they are not even pictures.)
+
+### Added
+ - InputPath(s) get resolved now at the very start - good for smaller output (`InputPath` will be replaced by `.\`)
+ - `Test-Duplicates()`: Files without any content will get overwritten.
+
+
 ## 3.4.5 - 2018-05-05
 ### Changed
  - Prettierr (a.k.a. less) output from `Start-EXIFManipulation()`.

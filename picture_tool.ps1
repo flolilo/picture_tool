@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.4.5
-        Date:       2018-05-05
+        Version:    3.4.6
+        Date:       2018-05-22
         Author:     flolilo
 
     .INPUTS
@@ -90,7 +90,7 @@ param(
     [string]$EXIFArtistName =       "",
     [string]$EXIFCopyrightText =    "",
     [ValidateNotNullOrEmpty()]
-    [array]$Formats =               $(if($Convert2JPEG -eq 1){@("*.tif")}elseif($EXIFTransferOnly -eq 1){@("*")}else{@("*.jpeg","*.jpg")}),
+    [array]$Formats =               $(if($Convert2JPEG -eq 1){@("*.tif")}else{@("*.jpeg","*.jpg")}),
     [ValidateRange(0,100)]
     [int]$ConvertQuality =          92,
     [ValidateRange(0,1)]
@@ -108,6 +108,9 @@ param(
     [int]$Debug =                   0
 )
 # DEFINITION: Combine all parameters into a hashtable, then delete the parameter variables:
+    for($i=0; $i -lt $InputPath.Length; $i++){
+        $InputPath[$i] = Resolve-Path -LiteralPath $InputPath[$i]
+    }
     [hashtable]$UserParams = @{
         InputPath =             $InputPath
         Convert2JPEG =          $Convert2JPEG
@@ -157,7 +160,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.4.5 - 2018-05-05"
+    $VersionNumber = "v3.4.6 - 2018-05-22"
 
 
 # ==================================================================================================
@@ -400,7 +403,7 @@ Function Get-InputFiles(){
         )
 
         [string]$inter = "$($Directory)\$($BaseName).jpg"
-        if((Test-Path -LiteralPath $inter -PathType Leaf) -eq $true){
+        if((Test-Path -LiteralPath $inter -PathType Leaf) -eq $true -and ([math]::Ceiling($(Get-Item -LiteralPath $inter).Length / 1kB)) -gt 0){
             [int]$k = 1
             while($true){
                 # for very long file names, cut the last X characters:
@@ -444,19 +447,68 @@ Function Get-InputFiles(){
                 }
 
                 $WorkingFiles += @(Get-ChildItem -LiteralPath $UserParams.InputPath[$i] -Filter $k | ForEach-Object {
-                    if(($_.Length / 1kB) -gt 0){
+                    if(([math]::Ceiling($_.Length / 1kB)) -gt 0){
                         [PSCustomObject]@{
-                            SourceFullName = $_.FullName
-                            SourceShortName = "ZYX"
-                            SourceName = $_.Name
-                            BaseName = $_.BaseName
-                            JPEGFullName = $(if($UserParams.Convert2JPEG -eq 1){Test-Duplicates -Directory (Split-Path -Path $_.FullName -Parent) -BaseName $_.BaseName}else{"ZYX"})
-                            JPEGShortName = "ZYX"
-                            Directory = Split-Path -Parent -Path $_.FullName
+                            SourceFullName = $(
+                                if($UserParams.Convert2JPEG -eq 1){
+                                    $_.FullName
+                                }else{
+                                    [array]$sourceinter = @(Get-ChildItem -LiteralPath $UserParams.InputPath[$i] -Filter "$($_.BaseName)*" | ForEach-Object {
+                                        [PSCustomObject]@{
+                                            FullName = $_.FullName
+                                            Extension = $_.Extension
+                                            Size = [math]::Ceiling($_.Length / 1kB)
+                                        }
+                                    })
+                                    if($sourceinter.length -gt 1){
+                                        [array]$sourceinter = @($($sourceinter | Where-Object {$_.Extension -notin $UserParams.Formats.replace("*","") -and $_.Size -gt 0}))
+                                        if($sourceinter.length -gt 1){
+                                            Write-ColorOut "More than one source-file found. Please choose between:" -ForegroundColor Yellow -Indentation 2
+                                            for($k=1; $k -le $sourceinter.Length; $k++){
+                                                Write-ColorOut "$($k).`t$($sourceinter[$($k - 1)].FullName.Replace("$($UserParams.InputPath[$i])\",".\"))" -ForegroundColor Gray -Indentation 4
+                                            }
+                                            [int]$choice = 0
+                                            while($choice -notin (1..$sourceinter.Length)){
+                                                try{
+                                                    Write-ColorOut "Which one do you want?`t" -ForegroundColor Yellow -NoNewLine -Indentation 2
+                                                    [int]$choice = Read-Host
+                                                }catch{
+                                                    Write-ColorOut "Wrong input!" -ForegroundColor Red -Indentation 4
+                                                    continue
+                                                }
+                                            }
+                                            $choice--
+                                            $sourceinter[$choice].FullName
+                                        }else{
+                                            $sourceinter.FullName
+                                        }
+                                    }else{
+                                        "ZYX"
+                                    }
+                                }
+                            )
+                            SourceShortName =   "ZYX"
+                            SourceName =        $(if($UserParams.Convert2JPEG -eq 1){
+                                                    $_.Name
+                                                }else{
+                                                    "ZYX"
+                                                })
+                            SourceBaseName =    $(if($UserParams.Convert2JPEG -eq 1){
+                                                    $_.BaseName
+                                                }else{
+                                                    "ZYX"
+                                                })
+                            ResultFullName =    $(if($UserParams.Convert2JPEG -eq 1){
+                                                    Test-Duplicates -Directory (Split-Path -Path $_.FullName -Parent) -BaseName $_.BaseName
+                                                }else{
+                                                    $_.FullName
+                                                })
+                            ResultShortName =   "ZYX"
+                            Directory =         Split-Path -Parent -Path $_.FullName
                         }
                     }else{
-                        Write-ColorOut "Empty file found! $($_.FullName.Replace("$((Get-Location).Path)","."))" -ForegroundColor DarkGray -Indentation 2
-                        Remove-Item $_.FullName
+                        Write-ColorOut "Empty file found! $($_.FullName.Replace("$($UserParams.InputPath[$i])\",".\"))" -ForegroundColor DarkGray -Indentation 2
+                        Remove-ItemSafely -LiteralPath $_.FullName
                     }
                 })
             }
@@ -468,19 +520,68 @@ Function Get-InputFiles(){
             }
 
             $WorkingFiles += @(Get-Item -LiteralPath $UserParams.InputPath[$i] | ForEach-Object {
-                if(($_.Length / 1kB) -gt 0){
+                if(([math]::Ceiling($_.Length / 1kB)) -gt 0){
                     [PSCustomObject]@{
-                        SourceFullName = $_.FullName
-                        SourceShortName = "ZYX"
-                        SourceName = $_.Name
-                        BaseName = $_.BaseName
-                        JPEGFullName = $(if($UserParams.Convert2JPEG -eq 1){Test-Duplicates -Directory (Split-Path -Path $_.FullName -Parent) -BaseName $_.BaseName}else{"ZYX"})
-                        JPEGShortName = "ZYX"
-                        Directory = Split-Path -Parent -Path $_.FullName
+                        SourceFullName = $(
+                            if($UserParams.Convert2JPEG -eq 1){
+                                $_.FullName
+                            }else{
+                                [array]$sourceinter = @(Get-ChildItem -LiteralPath $UserParams.InputPath[$i] -Filter "$($_.BaseName)*" | ForEach-Object {
+                                    [PSCustomObject]@{
+                                        FullName = $_.FullName
+                                        Extension = $_.Extension
+                                        Size = [math]::Ceiling($_.Length / 1kB)
+                                    }
+                                })
+                                if($sourceinter.length -gt 1){
+                                    [array]$sourceinter = @($($sourceinter | Where-Object {$_.Extension -notin $UserParams.Formats.replace("*","") -and $_.Size -gt 0}))
+                                    if($sourceinter.length -gt 1){
+                                        Write-ColorOut "More than one source-file found. Please choose between:" -ForegroundColor Yellow -Indentation 2
+                                        for($k=1; $k -le $sourceinter.Length; $k++){
+                                            Write-ColorOut "$($k).`t$($sourceinter[$($k - 1)].FullName.Replace("$($UserParams.InputPath[$i])\",".\"))" -ForegroundColor Gray -Indentation 4
+                                        }
+                                        [int]$choice = 0
+                                        while($choice -notin (1..$sourceinter.Length)){
+                                            try{
+                                                Write-ColorOut "Which one do you want?`t" -ForegroundColor Yellow -NoNewLine -Indentation 2
+                                                [int]$choice = Read-Host
+                                            }catch{
+                                                Write-ColorOut "Wrong input!" -ForegroundColor Red -Indentation 4
+                                                continue
+                                            }
+                                        }
+                                        $choice--
+                                        $sourceinter[$choice].FullName
+                                    }else{
+                                        $sourceinter.FullName
+                                    }
+                                }else{
+                                    "ZYX"
+                                }
+                            }
+                        )
+                        SourceShortName =   "ZYX"
+                        SourceName =        $(if($UserParams.Convert2JPEG -eq 1){
+                                                $_.Name
+                                            }else{
+                                                "ZYX"
+                                            })
+                        SourceBaseName =    $(if($UserParams.Convert2JPEG -eq 1){
+                                                $_.BaseName
+                                            }else{
+                                                "ZYX"
+                                            })
+                        ResultFullName =    $(if($UserParams.Convert2JPEG -eq 1){
+                                                Test-Duplicates -Directory (Split-Path -Path $_.FullName -Parent) -BaseName $_.BaseName
+                                            }else{
+                                                $_.FullName
+                                            })
+                        ResultShortName =   "ZYX"
+                        Directory =         Split-Path -Parent -Path $_.FullName
                     }
                 }else{
-                    Write-ColorOut "Empty file found! $($_.FullName.Replace("$((Get-Location).Path)","."))" -ForegroundColor DarkGray -Indentation 2
-                    Remove-Item $_.FullName
+                    Write-ColorOut "Empty file found! $($_.FullName.Replace("$($UserParams.InputPath[$i])\",".\"))" -ForegroundColor DarkGray -Indentation 2
+                    Remove-ItemSafely -LiteralPath $_.FullName
                 }
             })
         }else{
@@ -494,84 +595,42 @@ Function Get-InputFiles(){
     Write-Progress -Id 1 -Activity "Searching files..." -Status "Done!" -Completed
 
     if($UserParams.EXIFTransferOnly -eq 1){
-        [array]$original = @()
-        [array]$jpg = @()
-        [array]$sourcename = @()
-        [array]$WorkingFiles = @($WorkingFiles | Group-Object -Property BaseName | Where-Object {$_.Count -gt 1})
+        $WorkingFiles = @($WorkingFiles | Where-Object {$_.SourceFullName -ne "ZYX"})
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            if($WorkingFiles[$i].Group.SourceFullName.Length -gt 2){
-                [array]$inter = @($WorkingFiles[$i].Group.SourceFullName | Where-Object {$_ -notmatch '\.jpg$' -and $_ -notmatch '\.jpeg$'})
-
-                Write-ColorOut "More than one source-file found. Please choose between:" -ForegroundColor Yellow -Indentation 2
-                for($k=0; $k -lt $inter.Length; $k++){
-                    Write-ColorOut "$k - $($inter[$k])" -ForegroundColor Gray -Indentation 4
-                }
-                [int]$choice = 999
-                while($choice -notin (0..$inter.Length)){
-                    try{
-                        Write-ColorOut "Which one do you want?`t" -ForegroundColor Yellow -NoNewLine -Indentation 2
-                        [int]$choice = Read-Host
-                    }catch{
-                        Write-ColorOut "Wrong input!" -ForegroundColor Red -Indentation 4
-                        continue
-                    }
-                }
-                $original += @($inter[$choice])
-            }else{
-                $original += @($WorkingFiles[$i].Group.SourceFullName | Where-Object {$_ -notmatch '\.jpg$' -and $_ -notmatch '\.jpeg$'})
-            }
-            $jpg += @($WorkingFiles[$i].Group.SourceFullName | Where-Object {$_ -match '\.jpg$' -or $_ -match '\.jpeg$'})
-            $sourcename += @($WorkingFiles[$i].Group.SourceName)
-        }
-        [array]$WorkingFiles = @()
-        for($i=0; $i -lt $original.Length; $i++){
-            $WorkingFiles += @(
-                if(($_.Length / 1kB) -gt 0){
-                    [PSCustomObject]@{
-                        SourceFullName = $original[$i]
-                        SourceShortName = "ZYX"
-                        SourceName = $sourcename[$i]
-                        JPEGFullName = $jpg[$i]
-                        JPEGShortName = "ZYX"
-                        Directory = Split-Path -Parent -Path $_.FullName
-                    }
-                }else{
-                    Write-ColorOut "Empty file found! $($_.FullName.Replace("$((Get-Location).Path)","."))" -ForegroundColor DarkGray -Indentation 2
-                    Remove-Item $_.FullName
-                }
-                Write-ColorOut "From:`t$($original[$i].Replace("$($UserParams.InputPath)","."))" -ForegroundColor Gray -Indentation 4
-                Write-ColorOut "To:`t`t$($jpg[$i].Replace("$($UserParams.InputPath)","."))" -Indentation 4
-            )
-        }
-        if($script:Debug -gt 1){
-            $WorkingFiles | Format-Table -AutoSize
+            $inter = Get-Item -LiteralPath $WorkingFiles[$i].SourceFullName | Select-Object BaseName,Name
+            $WorkingFiles[$i].SourceName = $inter.Name
+            $WorkingFiles[$i].SourceBaseName = $inter.BaseName
+            Write-ColorOut "From:`t$($WorkingFiles[$i].SourceFullname.Replace("$($UserParams.InputPath)","."))" -ForegroundColor Gray -Indentation 4
+            Write-ColorOut "To:`t`t$($WorkingFiles[$i].ResultFullname.Replace("$($UserParams.InputPath)","."))" -Indentation 4
         }
         Write-ColorOut "Continue?`t" -ForegroundColor Yellow -NoNewLine -Indentation 2
         Pause
     }
-    
-    $WorkingFiles | ForEach-Object {
-        if($_.SourceFullName.Length -ge 260){
-            $ShortDir = $fso.GetFolder($_.Directory).ShortName
-            $ShortFile = $fso.GetFile($_.SourceFullName).ShortName
-            $PreDir = Split-Path -Parent $_.Directory
-            $ShortDir = Join-Path $PreDir -ChildPath $ShortDir
-            $FullShortName = Join-Path $ShortDir -ChildPath $ShortFile
-            $_.SourceShortName = $FullShortName
+
+    # Use 8.3 names if paths are too long:
+    for($i=0; $i -lt $WorkingFiles.Length; $i++){
+        if($WorkingFiles[$i].SourceFullName.Length -ge 260){
+            $sShortDir = $($fso.GetFolder($WorkingFiles[$i].Directory).ShortName).ToString()
+            $sShortFile = $($fso.GetFile($WorkingFiles[$i].SourceFullName).ShortName).ToString()
+            $sPreDir = $(Split-Path -Parent $WorkingFiles[$i].Directory).ToString()
+            $sShortDir = $(Join-Path $sPreDir -ChildPath $sShortDir).ToString()
+            $WorkingFiles[$i].SourceShortName = $(Join-Path $sShortDir -ChildPath $sShortFile).ToString()
         }
-        if($_.JPEGFullName.Length -ge 260){
+        if($WorkingFiles[$i].ResultFullName.Length -ge 260){
             if($UserParams.Convert2JPEG -eq 1){
-                # Without this, ImageMagick cannot handle long file names:
-                New-Item -Path $_.JPEGFullName -ItemType File -ErrorAction SilentlyContinue | Out-Null
-                Start-Sleep -Milliseconds 2
+                New-Item -Path $WorkingFiles[$i].ResultFullName -ItemType File -ErrorAction SilentlyContinue | Out-Null
+                Start-Sleep -Milliseconds 5
             }
-            $ShortDir = $fso.GetFolder($_.Directory).ShortName
-            $ShortFile = $fso.GetFile($_.JPEGFullName).ShortName
-            $PreDir = Split-Path -Parent $_.Directory
-            $ShortDir = Join-Path $PreDir -ChildPath $ShortDir
-            $FullShortName = Join-Path $ShortDir -ChildPath $ShortFile
-            $_.JPEGShortName = $FullShortName
+            $rShortDir = $($fso.GetFolder($WorkingFiles[$i].Directory).ShortName).ToString()
+            $rShortFile = $($fso.GetFile($WorkingFiles[$i].ResultFullName).ShortName).ToString()
+            $rPreDir = $(Split-Path -Parent $WorkingFiles[$i].Directory).ToString()
+            $rShortDir = $(Join-Path $rPreDir -ChildPath $rShortDir).ToString()
+            $WorkingFiles[$i].ResultShortName = $(Join-Path $rShortDir -ChildPath $rShortFile).ToString()
         }
+    }
+
+    if($script:Debug -gt 1){
+        $WorkingFiles | Format-Table -AutoSize
     }
 
     Write-ColorOut "Found $($WorkingFiles.Length) file(s)." -ForegroundColor Gray -Indentation 2
@@ -592,35 +651,30 @@ Function Start-Converting(){
 
     $sw = [diagnostics.stopwatch]::StartNew()
 
-    $WorkingFiles | ForEach-Object -Begin {
-        [int]$processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
-        [int]$i = 1
-        Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "Starting..." -PercentComplete -1
-        $sw.Reset()
-        $sw.Start()
-    } -Process {
-        while($processCounter -ge $UserParams.MagickThreads){
-            $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
-            Start-Sleep -Milliseconds 25
-        }
+    [int]$processCompensation = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+    for($i=0; $i -lt $WorkingFiles.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$i - $($_.SourceName)" -PercentComplete $($i * 100 / $WorkingFiles.Length) 
+            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$($i + 1) - $($WorkingFiles[$i].SourceName)" -PercentComplete $(($i + 1) * 100 / $WorkingFiles.Length) 
             $sw.Reset()
             $sw.Start()
         }
+        while(($processCounter - $processCompensation) -ge $UserParams.MagickThreads){
+            $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+            Start-Sleep -Milliseconds 25
+        }
 
         # TODO: "-layers merge" for layered images
-        [string]$magickArgList = "convert `"$($_.SourceFullName)`" -quality $($UserParams.ConvertQuality) -interlace line -define jpeg:dct-method=float -define jpeg:fancy-upsampling=on -define jpeg:optimize-coding=on -sampling-factor 4:4:4 -depth 8"
+        [string]$magickArgList = "convert `"$($WorkingFiles[$i].SourceFullName)`" -quality $($UserParams.ConvertQuality) -interlace line -define jpeg:dct-method=float -define jpeg:fancy-upsampling=on -define jpeg:optimize-coding=on -sampling-factor 4:4:4 -depth 8"
         if($UserParams.Convert2SRGB -eq 1){
             $magickArgList += " -profile `"C:\Windows\System32\spool\drivers\color\sRGB Color Space Profile.icm`" -colorspace sRGB"
         }
         if($UserParams.ConvertScaling -ne 100){
             $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"   
         }
-        $magickArgList += " -quiet `"$($_.JPEGFullName)`""
+        $magickArgList += " -quiet `"$($WorkingFiles[$i].ResultFullName)`""
 
         if($script:Debug -gt 0){
-            Write-ColorOut "magick.exe $($magickArgList.Replace("$((Get-Location).Path)","."))" -ForegroundColor Gray -Indentation 4
+            Write-ColorOut "magick.exe $($magickArgList.Replace("$($UserParams.InputPath[0])\",".\"))" -ForegroundColor Gray -Indentation 4
         }
 
         try {
@@ -632,17 +686,14 @@ Function Start-Converting(){
         }
 
         $processCounter++
-        $i++
-    } -End {
-        while($processCounter -gt 0){
-            $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
-            Start-Sleep -Milliseconds 10
-        }
-        Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "Done!" -Completed
     }
+    while(($processCounter - $processCompensation) -gt 0){
+        $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+        Start-Sleep -Milliseconds 10
+    }
+    Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "Done!" -Completed
 
     Write-ColorOut "Successfully converted $successcounter file(s)." -ForegroundColor Gray -Indentation 2
-
     return $errorcounter
 }
 
@@ -721,12 +772,12 @@ Function Start-EXIFManipulation(){
     [int]$successcounter = 0
 
     # For long paths with exiftool:
-    $WorkingFiles | ForEach-Object {
-        if($_.SourceShortName -ne "ZYX"){
-            $_.SourceFullName = $_.SourceShortName
+    for($i=0; $i -lt $WorkingFiles.Length; $i++){
+        if($WorkingFiles[$i].SourceShortName -ne "ZYX"){
+            $WorkingFiles[$i].SourceFullName = $WorkingFiles[$i].SourceShortName
         }
-        if($_.JPEGShortName -ne "ZYX"){
-            $_.JPEGFullName = $_.JPEGShortName
+        if($WorkingFiles[$i].ResultShortName -ne "ZYX"){
+            $WorkingFiles[$i].ResultFullName = $WorkingFiles[$i].ResultShortName
         }
     }
 
@@ -847,62 +898,62 @@ Function Start-EXIFManipulation(){
     # Transfer EXIF (keep all as-is)
     if($exifchoice -eq 0){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:all=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:By-Line`n-IPTC:CopyrightNotice`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-All:all=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:By-Line`n-IPTC:CopyrightNotice`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Transfer EXIF (add copyright)
     }elseif($exifchoice -eq 1){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-All:All=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Transfer EXIF (delete non-cam EXIF)
     }elseif($exifchoice -eq 2){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Transfer EXIF (delete non-cam EXIF, add copyright)
     }elseif($exifchoice -eq 3){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Delete all EXIF in converted JPEG
     }elseif($exifchoice -eq 4){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Delete all EXIF in converted JPEG, add copyright
     }elseif($exifchoice -eq 5){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].JPEGFullName)"
+            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (keep all as-is)
     }elseif($exifchoice -eq 6){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:By-Line<IPTC:By-Line`n-IPTC:CopyrightNotice<IPTC:CopyrightNotice`n-IPTC:ObjectName<IPTC:ObjectName`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:By-Line<IPTC:By-Line`n-IPTC:CopyrightNotice<IPTC:CopyrightNotice`n-IPTC:ObjectName<IPTC:ObjectName`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (add copyright)
     }elseif($exifchoice -eq 7){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:ObjectName<IPTC:ObjectName`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:ObjectName<IPTC:ObjectName`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (delete non-cam EXIF)
     }elseif($exifchoice -eq 8){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:All<EXIF:All`n--EXIF:Software`n--EXIF:XResolution`n--EXIF:YResolution`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:All<EXIF:All`n--EXIF:Software`n--EXIF:XResolution`n--EXIF:YResolution`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (delete non-cam EXIF, add copyright)
     }elseif($exifchoice -eq 9){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-EXIF:All<EXIF:All`n--EXIF:Software`n--EXIF:XResolution`n--EXIF:YResolution`n--EXIF:Artist`n--EXIF:Copyright`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-EXIF:All<EXIF:All`n--EXIF:Software`n--EXIF:XResolution`n--EXIF:YResolution`n--EXIF:Artist`n--EXIF:Copyright`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (delete all EXIF)
     }elseif($exifchoice -eq 10){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (delete all EXIF, add copyright)
     }elseif($exifchoice -eq 11){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].SourceFullName)"
+            $exiftoolArgList += "-All:All=`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     }
 
@@ -911,7 +962,7 @@ Function Start-EXIFManipulation(){
     # DEFINITION: Pass arguments to Exiftool:
     for($i=0; $i -lt $exiftoolArgList.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "$choiceString..." -Status "File # $i - $($WorkingFiles[$i].SourceName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
+            Write-Progress -Activity "$choiceString..." -Status "File # $i - $($WorkingFiles[$i].ResultFullName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
             $sw.Reset()
             $sw.Start()
         }
@@ -1000,34 +1051,45 @@ Function Start-Recycling(){
 
     $sw = [diagnostics.stopwatch]::StartNew()
 
-    $WorkingFiles | ForEach-Object -Begin {
-        [int]$i = 1
-        Write-Progress -Activity "Recycling source-files..." -Status "File #$i - $($_.SourceName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
-        $sw.Reset()
-        $sw.Start()
-    } -Process {
+    for($i=0; $i -lt $WorkingFiles.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "Recycling source-files..." -Status "File #$i - $($_.SourceName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
+            Write-Progress -Activity "Recycling source-files..." -Status "File #$i - $($WorkingFiles[$i].SourceName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
             $sw.Reset()
             $sw.Start()
         }
 
         if($script:Debug -gt 0){
-            Write-ColorOut "Remove-ItemSafely `"$($_.SourceFullName.Replace("$((Get-Location).Path)","."))`"" -ForegroundColor Gray -Indentation 4
+            Write-ColorOut "Remove-ItemSafely `"$($WorkingFiles[$i].SourceFullName.Replace("$($UserParams.InputPath[0])\",".\"))`"" -ForegroundColor Gray -Indentation 4
         }
         try {
-            Remove-ItemSafely -LiteralPath $_.SourceFullName
+            if($WorkingFiles[$i].SourceShortName -eq "ZYX"){
+                Remove-ItemSafely -LiteralPath $WorkingFiles[$i].SourceFullName -ErrorAction Stop
+            }else{
+                Write-ColorOut "Source file's name is too long for Recycle Bin. Delete directly?`t" -ForegroundColor Magenta -Indentation 2 -NoNewLine
+                [int]$choice = 99
+                while($true){
+                    [int]$choice = Read-Host
+                    if($choice -eq 1){
+                        Remove-Item  -LiteralPath $WorkingFiles[$i].SourceShortName -ErrorAction Stop
+                        Write-ColorOut "Deleted!" -ForegroundColor Gray -Indentation 2
+                        break
+                    }elseif($choice -eq 0){
+                        break
+                    }else{
+                        Write-ColorOut "Invalid choice." -ForegroundColor DarkGray -Indentation 4
+                        continue
+                    }
+                }
+            }
             $successcounter++
         }catch{
             if($script:Debug -gt 0){
-                Write-ColorOut "Could not delete `"$($_.SourceFullName.Replace("$((Get-Location).Path)","."))`"" -ForegroundColor Magenta -Indentation 2
+                Write-ColorOut "Could not delete `"$($WorkingFiles[$i].SourceFullName.Replace("$($UserParams.InputPath[0])\",".\"))`"" -ForegroundColor Magenta -Indentation 2
             }
             $errorcounter++
         }
-        $i++
-    } -End {
-        Write-Progress -Activity "Recycling source-files..." -Status "Done!" -Completed
     }
+    Write-Progress -Activity "Recycling source-files..." -Status "Done!" -Completed
 
     Write-ColorOut "Successfully deleted $successcounter file(s)." -ForegroundColor Gray -Indentation 2
 
