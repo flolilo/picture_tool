@@ -104,7 +104,8 @@ param(
     [ValidateRange(1,100)]
     [int]$ConvertScaling =          100,
     [string]$EXIFtool =             "$($PSScriptRoot)\exiftool.exe",
-    [string]$Magick =               "$($PSScriptRoot)\ImageMagick\magick.exe",
+    [string]$Magick =               "C:\GraphicsMagick\gm.exe",
+    # [string]$Magick =               "$($PSScriptRoot)\ImageMagick\magick.exe",
     [ValidateRange(1,48)]
     [int]$MagickThreads =           12,
     [ValidateRange(0,1)]
@@ -182,7 +183,7 @@ Function Write-ColorOut(){
             Using the [Console]-commands to make everything faster.
         .NOTES
             Date: 2018-05-22
-        
+
         .PARAMETER Object
             String to write out
         .PARAMETER ForegroundColor
@@ -227,7 +228,7 @@ Function Write-ColorOut(){
     }else{
         [Console]::Write($Object)
     }
-    
+
     if($ForegroundColor.Length -ge 3){
         [Console]::ForegroundColor = $old_fg_color
     }
@@ -248,7 +249,7 @@ Function Start-Sound(){
 
         .PARAMETER Success
             1 plays Windows's "tada"-sound, 0 plays Windows's "chimes"-sound.
-        
+
         .EXAMPLE
             For success: Start-Sound 1
         .EXAMPLE
@@ -655,15 +656,15 @@ Function Start-Converting(){
 
     $sw = [diagnostics.stopwatch]::StartNew()
 
-    [int]$processCompensation = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+    [int]$processCompensation = @(Get-Process -Name gm -ErrorAction SilentlyContinue).count
     for($i=0; $i -lt $WorkingFiles.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$($i + 1) - $($WorkingFiles[$i].SourceName)" -PercentComplete $(($i + 1) * 100 / $WorkingFiles.Length) 
+            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$($i + 1) - $($WorkingFiles[$i].SourceName)" -PercentComplete $(($i + 1) * 100 / $WorkingFiles.Length)
             $sw.Reset()
             $sw.Start()
         }
         while(($processCounter - $processCompensation) -ge $UserParams.MagickThreads){
-            $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+            $processCounter = @(Get-Process -Name gm -ErrorAction SilentlyContinue).count
             Start-Sleep -Milliseconds 25
         }
 
@@ -673,26 +674,26 @@ Function Start-Converting(){
             $magickArgList += " -profile `"C:\Windows\System32\spool\drivers\color\sRGB Color Space Profile.icm`" -colorspace sRGB"
         }
         if($UserParams.ConvertScaling -ne 100){
-            $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"   
+            $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"
         }
-        $magickArgList += " -quiet `"$($WorkingFiles[$i].ResultFullName)`""
+        $magickArgList += " `"$($WorkingFiles[$i].ResultFullName)`""
 
         if($script:Debug -gt 0){
-            Write-ColorOut "magick.exe $($magickArgList.Replace("$($UserParams.InputPath[0])\",".\"))" -ForegroundColor Gray -Indentation 4
+            Write-ColorOut "gm.exe $($magickArgList.Replace("$($UserParams.InputPath[0])\",".\"))" -ForegroundColor Gray -Indentation 4
         }
 
         try {
             Start-Process -FilePath $UserParams.Magick -ArgumentList $magickArgList -NoNewWindow -ErrorAction Stop
             $successcounter++
         }catch{
-            Write-ColorOut "magick.exe `"$magickArgList`" failed!" -ForegroundColor Magenta -Indentation 2
+            Write-ColorOut "gm.exe `"$magickArgList`" failed!" -ForegroundColor Magenta -Indentation 2
             $errorcounter++
         }
 
         $processCounter++
     }
     while(($processCounter - $processCompensation) -gt 0){
-        $processCounter = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
+        $processCounter = @(Get-Process -Name gm -ErrorAction SilentlyContinue).count
         Start-Sleep -Milliseconds 10
     }
     Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "Done!" -Completed
@@ -720,7 +721,7 @@ Function Get-EXIFValues(){
                     [array]$JSON = $JSON | Where-Object {$_.preset -eq "default"}
                 }
                 [array]$JSON = $JSON.values
-    
+
                 if($UserParams.EXIFArtistName.Length -lt 1){
                     [string]$UserParams.EXIFArtistName = $JSON.artist_name
                 }
