@@ -182,7 +182,7 @@ Function Write-ColorOut(){
             Using the [Console]-commands to make everything faster.
         .NOTES
             Date: 2018-05-22
-        
+
         .PARAMETER Object
             String to write out
         .PARAMETER ForegroundColor
@@ -227,7 +227,7 @@ Function Write-ColorOut(){
     }else{
         [Console]::Write($Object)
     }
-    
+
     if($ForegroundColor.Length -ge 3){
         [Console]::ForegroundColor = $old_fg_color
     }
@@ -248,7 +248,7 @@ Function Start-Sound(){
 
         .PARAMETER Success
             1 plays Windows's "tada"-sound, 0 plays Windows's "chimes"-sound.
-        
+
         .EXAMPLE
             For success: Start-Sound 1
         .EXAMPLE
@@ -658,7 +658,7 @@ Function Start-Converting(){
     [int]$processCompensation = @(Get-Process -Name magick -ErrorAction SilentlyContinue).count
     for($i=0; $i -lt $WorkingFiles.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$($i + 1) - $($WorkingFiles[$i].SourceName)" -PercentComplete $(($i + 1) * 100 / $WorkingFiles.Length) 
+            Write-Progress -Activity "Converting file(s) to JPEG(s) (-q = $($UserParams.ConvertQuality))..." -Status "File #$($i + 1) - $($WorkingFiles[$i].SourceName)" -PercentComplete $(($i + 1) * 100 / $WorkingFiles.Length)
             $sw.Reset()
             $sw.Start()
         }
@@ -673,7 +673,7 @@ Function Start-Converting(){
             $magickArgList += " -profile `"C:\Windows\System32\spool\drivers\color\sRGB Color Space Profile.icm`" -colorspace sRGB"
         }
         if($UserParams.ConvertScaling -ne 100){
-            $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"   
+            $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"
         }
         $magickArgList += " -quiet `"$($WorkingFiles[$i].ResultFullName)`""
 
@@ -720,7 +720,7 @@ Function Get-EXIFValues(){
                     [array]$JSON = $JSON | Where-Object {$_.preset -eq "default"}
                 }
                 [array]$JSON = $JSON.values
-    
+
                 if($UserParams.EXIFArtistName.Length -lt 1){
                     [string]$UserParams.EXIFArtistName = $JSON.artist_name
                 }
@@ -1179,7 +1179,7 @@ Function Start-Everything(){
 
     Write-ColorOut "$(Get-CurrentDate)  --  Done!" -ForegroundColor Green
     Start-Sound -Success 1
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 1
     Invoke-Close -PSPID $preventstandbyid
 }
 
