@@ -1,6 +1,7 @@
 Todo:
     [ ] `-EXIFTransferOnly`: Overwrite vs. just append. @high
     [ ] Pester: Test converted pictures for bit depth | color space | interlacing @high
+    [ ] Verify (https://stackoverflow.com/questions/17757114/imagemagick-to-verify-image-integrity#17764714) @high
     [ ] Copy colorspace when converting with ImageMagick: https://photo.stackexchange.com/questions/56378
         [ ] Add TESTIMAGES test images for this, testing multiple color profiles.
     [ ] Pester: Mock-Test Start-Everything @high
