@@ -6,7 +6,7 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.4.7
+        Version:    3.4.7__Devel
         Date:       2019-02-16
         Author:     flolilo
 
@@ -165,7 +165,7 @@ param(
         }
     }
 # DEFINITION: version number:
-    $VersionNumber = "v3.4.7 - 2019-02-16"
+    $VersionNumber = "v3.4.7__Devel - 2019-02-16"
 
 
 # ==================================================================================================
