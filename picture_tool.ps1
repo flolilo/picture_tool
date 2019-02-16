@@ -6,8 +6,8 @@
     .DESCRIPTION
         This tool uses ImageMagick and ExifTool.
     .NOTES
-        Version:    3.4.6
-        Date:       2018-05-22
+        Version:    3.4.7
+        Date:       2019-02-16
         Author:     flolilo
 
     .INPUTS
@@ -65,7 +65,7 @@
     .PARAMETER EXIFtoolFailSafe
         1 enables (default), 0 disables.
         Run Exiftool without any commands in an earlier stage. This will prevent errors due to the fact that when installing a new version of Exiftool, the first start will need a few seconds. The rest of the time, the whole process will be slowed down by around 1 second.
-    .PARAMETER Debug
+    .PARAMETER InfoPreference
         default: 0
         1 stops after each step, 2 additionally outputs some commands.
 
@@ -109,7 +109,7 @@ param(
     [int]$MagickThreads =           12,
     [ValidateRange(0,1)]
     [int]$EXIFtoolFailSafe =        1,
-    [int]$Debug =                   0
+    [int]$InfoPreference =          0
 )
 # DEFINITION: Combine all parameters into a hashtable, then delete the parameter variables:
     for($i=0; $i -lt $InputPath.Length; $i++){
@@ -210,30 +210,32 @@ Function Write-ColorOut(){
         [int]$Indentation=0
     )
 
-    if($ForegroundColor.Length -ge 3){
-        $old_fg_color = [Console]::ForegroundColor
-        [Console]::ForegroundColor = $ForegroundColor
-    }
-    if($BackgroundColor.Length -ge 3){
-        $old_bg_color = [Console]::BackgroundColor
-        [Console]::BackgroundColor = $BackgroundColor
-    }
-    if($Indentation -gt 0){
-        [Console]::CursorLeft = $Indentation
-    }
+    
+        if($ForegroundColor.Length -ge 3){
+            $old_fg_color = [Console]::ForegroundColor
+            [Console]::ForegroundColor = $ForegroundColor
+        }
+        if($BackgroundColor.Length -ge 3){
+            $old_bg_color = [Console]::BackgroundColor
+            [Console]::BackgroundColor = $BackgroundColor
+        }
+        if($Indentation -gt 0){
+            [Console]::CursorLeft = $Indentation
+        }
 
-    if($NoNewLine -eq $false){
-        [Console]::WriteLine($Object)
-    }else{
-        [Console]::Write($Object)
-    }
+        if($NoNewLine -eq $false){
+            [Console]::WriteLine($Object)
+        }else{
+            [Console]::Write($Object)
+        }
 
-    if($ForegroundColor.Length -ge 3){
-        [Console]::ForegroundColor = $old_fg_color
-    }
-    if($BackgroundColor.Length -ge 3){
-        [Console]::BackgroundColor = $old_bg_color
-    }
+        if($ForegroundColor.Length -ge 3){
+            [Console]::ForegroundColor = $old_fg_color
+        }
+        if($BackgroundColor.Length -ge 3){
+            [Console]::BackgroundColor = $old_bg_color
+        }
+    #>
 }
 
 # DEFINITION: For the auditory experience:
@@ -271,9 +273,9 @@ Function Start-Sound(){
     }
 }
 
-# DEFINITION: Pause in Debug:
+# DEFINITION: Pause in InfoPreference:
 Function Invoke-Pause(){
-    if($script:Debug -ne 0){
+    if($script:InfoPreference -ne 0){
         Pause
     }
 }
@@ -288,7 +290,7 @@ Function Invoke-Close(){
     if($PSPID -ne 999999999){
         Stop-Process -Id $PSPID -ErrorAction SilentlyContinue
     }
-    if($script:Debug -gt 0){
+    if($script:InfoPreference -gt 0){
         Pause
     }
 
@@ -318,7 +320,7 @@ $standby = @'
     $standby = [Convert]::ToBase64String($standby)
 
     [int]$preventstandbyid = (Start-Process powershell -ArgumentList "-EncodedCommand $standby" -WindowStyle Hidden -PassThru).Id
-    if($script:Debug -gt 0){
+    if($script:InfoPreference -gt 0){
         Write-ColorOut "preventsleep-PID is $("{0:D8}" -f $preventstandbyid)" -ForegroundColor Gray -BackgroundColor DarkGray -Indentation 4
     }
     Start-Sleep -Milliseconds 25
@@ -633,7 +635,7 @@ Function Get-InputFiles(){
         }
     }
 
-    if($script:Debug -gt 1){
+    if($script:InfoPreference -gt 1){
         $WorkingFiles | Format-Table -AutoSize
     }
 
@@ -675,9 +677,9 @@ Function Start-Converting(){
         if($UserParams.ConvertScaling -ne 100){
             $magickArgList += " -filter Lanczos -resize $($UserParams.ConvertScaling)%"
         }
-        $magickArgList += " -quiet `"$($WorkingFiles[$i].ResultFullName)`""
+        $magickArgList += " `"$($WorkingFiles[$i].ResultFullName)`""
 
-        if($script:Debug -gt 0){
+        if($script:InfoPreference -gt 0){
             Write-ColorOut "magick.exe $($magickArgList.Replace("$($UserParams.InputPath[0])\",".\"))" -ForegroundColor Gray -Indentation 4
         }
 
@@ -844,7 +846,7 @@ Function Start-EXIFManipulation(){
             return 1
         }
 
-        if($script:Debug -gt 0){
+        if($script:InfoPreference -gt 0){
             Write-ColorOut "exiftool instance #$i created!" -ForegroundColor Gray -Indentation 2
         }
     }
@@ -902,22 +904,22 @@ Function Start-EXIFManipulation(){
     # Transfer EXIF (keep all as-is)
     if($exifchoice -eq 0){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:all=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:By-Line`n-IPTC:CopyrightNotice`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:By-Line`n-IPTC:CopyrightNotice`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID"
         }
     # Transfer EXIF (add copyright)
     }elseif($exifchoice -eq 1){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-All:All=`n-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-IPTC:Keywords`n-IPTC:ObjectName`n-XMP:Label`n-XMP-xmp:Rating`n-XMP:Subject`n-XMP:HierarchicalSubject`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID"
         }
     # Transfer EXIF (delete non-cam EXIF)
     }elseif($exifchoice -eq 2){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID"
         }
     # Transfer EXIF (delete non-cam EXIF, add copyright)
     }elseif($exifchoice -eq 3){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].SourceFullName)`n-EXIF:All`n-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:All=`n-IPTC:All=`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID"
         }
     # Delete all EXIF in converted JPEG
     }elseif($exifchoice -eq 4){
@@ -932,12 +934,12 @@ Function Start-EXIFManipulation(){
     # Modify EXIF (keep all as-is)
     }elseif($exifchoice -eq 6){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:By-Line<IPTC:By-Line`n-IPTC:CopyrightNotice<IPTC:CopyrightNotice`n-IPTC:ObjectName<IPTC:ObjectName`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:By-Line<IPTC:By-Line`n-IPTC:CopyrightNotice<IPTC:CopyrightNotice`n-IPTC:ObjectName<IPTC:ObjectName`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (add copyright)
     }elseif($exifchoice -eq 7){
         for($i=0; $i -lt $WorkingFiles.Length; $i++){
-            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=`n-XMP:OriginalDocumentID=`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:ObjectName<IPTC:ObjectName`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
+            $exiftoolArgList += "-EXIF:XResolution=300`n-EXIF:YResolution=300`n-EXIF:Software=`n-Photoshop:All=`n-Adobe:All=`n-XMP:CreatorTool=`n-XMP:HistoryAction=`n-XMP:HistoryInstanceID=`n-XMP:HistorySoftwareAgent=`n-XMP:HistoryWhen=`n-XMP:InstanceID=`n-XMP:LegacyIPTCDigest=`n-XMP:DocumentID=DocumentID`n-XMP:OriginalDocumentID=OriginalDocumentID`n-XMP:HistoryChanged=`n-IPTC:Keywords<IPTC:Keywords`n-IPTC:ObjectName<IPTC:ObjectName`n-EXIF:Artist=$($UserParams.EXIFArtistName)`n-EXIF:Copyright=$($UserParams.EXIFCopyrightText)`n-IPTC:By-Line=$($UserParams.EXIFArtistName)`n-IPTC:CopyrightNotice=$($UserParams.EXIFCopyrightText)`n-charset`nfilename=utf8`n-overwrite_original`n$($WorkingFiles[$i].ResultFullName)"
         }
     # Modify EXIF (delete non-cam EXIF)
     }elseif($exifchoice -eq 8){
@@ -971,7 +973,7 @@ Function Start-EXIFManipulation(){
             $sw.Start()
         }
 
-        if($script:Debug -gt 0){
+        if($script:InfoPreference -gt 0){
             [string]$inter = $exiftoolArgList[$i].ToString()
             [string]$inter += "`n-verbose"
             $exiftoolArgList[$i] = $inter
@@ -1062,7 +1064,7 @@ Function Start-Recycling(){
             $sw.Start()
         }
 
-        if($script:Debug -gt 0){
+        if($script:InfoPreference -gt 0){
             Write-ColorOut "Remove-ItemSafely `"$($WorkingFiles[$i].SourceFullName.Replace("$($UserParams.InputPath[0])\",".\"))`"" -ForegroundColor Gray -Indentation 4
         }
         try {
@@ -1087,7 +1089,7 @@ Function Start-Recycling(){
             }
             $successcounter++
         }catch{
-            if($script:Debug -gt 0){
+            if($script:InfoPreference -gt 0){
                 Write-ColorOut "Could not delete `"$($WorkingFiles[$i].SourceFullName.Replace("$($UserParams.InputPath[0])\",".\"))`"" -ForegroundColor Magenta -Indentation 2
             }
             $errorcounter++
@@ -1117,7 +1119,7 @@ Function Start-Everything(){
     [int]$preventstandbyid = Invoke-PreventSleep
 
     $inter = Test-EXEPaths -UserParams $UserParams
-    if($script:Debug -gt 1){
+    if($script:InfoPreference -gt 1){
         $UserParams | Format-List
     }
     if($inter -eq $false -or $inter.GetType().Name -ne "hashtable"){
@@ -1136,7 +1138,7 @@ Function Start-Everything(){
         Start-Sleep 2
         Invoke-Close -PSPID $preventstandbyid
     }
-    if($script:Debug -gt 1){
+    if($script:InfoPreference -gt 1){
         $WorkingFiles | Format-Table -AutoSize
     }
     Invoke-Pause

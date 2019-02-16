@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## 3.4.7 - 2019-02-16
+### Changed
+- `$Debug` renamed to `$Infopreference`
+- `XMP:DocumentID` repaired.
+
+
 ## 3.4.6 - 2018-05-22
 ### Changed
  - `$WorkingFiles` no longer gets piped, but got its own `for`-loops. Should make things faster.
