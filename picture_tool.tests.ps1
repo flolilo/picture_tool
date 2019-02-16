@@ -641,7 +641,7 @@ Describe "Start-EXIFManipulation" {
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
             $meta.DocumentID            | Should Be $null
-            
+
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
         It "delete all" {

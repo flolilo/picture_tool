@@ -1,12 +1,14 @@
 Todo:
+    [ ] `-EXIFTransferOnly`: Overwrite vs. just append. @high
     [ ] Pester: Test converted pictures for bit depth | color space | interlacing @high
+    [ ] Verify (https://stackoverflow.com/questions/17757114/imagemagick-to-verify-image-integrity#17764714) @high
     [ ] Copy colorspace when converting with ImageMagick: https://photo.stackexchange.com/questions/56378
         [ ] Add TESTIMAGES test images for this, testing multiple color profiles.
-    [ ] Pester: Mock-Test Start-Everything @high 
+    [ ] Pester: Mock-Test Start-Everything @high
         [x] At least bit depth & progressive-saving work @done(18-03-28 19:28)
     [ ] Add drag and drop support for files.
-    [ ] Change from returning `$false` to `throw` if something goes wrong. @low 
-    [ ] Proper formatting for exiftool's output. @low 
+    [ ] Change from returning `$false` to `throw` if something goes wrong. @low
+    [ ] Proper formatting for exiftool's output. @low
 Done:
     [x] Provide some numbers (files found / files processed) @done(18-05-05 19:11)
     [x] exiftool arguments: first go to `if`, then go to `for`. also, use an `array` for arguments. @done(18-05-05 13:11)
