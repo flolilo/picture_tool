@@ -1,5 +1,7 @@
 ﻿# Comment out the last block of picture_tool (i.e. "Start-up") before running this script!
 # Maybe also comment out write-colorout function.
+# The 7z - file from GitHub only includes dummy-versions of the EXE-files (e.g. magick.exe, exiftool.exe). Please replace them before testing!
+
 
 # DEFINITION: Get all error-outputs in English:
     [Threading.Thread]::CurrentThread.CurrentUICulture = 'en-US'
@@ -9,8 +11,6 @@
 
 . $PSScriptRoot\picture_tool.ps1
 
-Write-Host "The 7z - file from GitHub only includes dummy-versions of the EXE-files (e.g. magick.exe, exiftool.exe). Please replace them before testing!" -ForegroundColor Magenta
-Pause
 
 Describe "Test-EXEPaths" {
     $BlaDrive = "$TestDrive\TEST"
@@ -490,7 +490,7 @@ Describe "Start-EXIFManipulation" {
                 $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
                 $meta.Label                 | Should Be "Test Label"
                 $meta.Rating                | Should Be "4"
-                $meta.DocumentID            | Should Be $null
+                $meta.DocumentID            | Should BeIn @("DocumentID", $null)
             }
             Pop-Location
         }
@@ -525,7 +525,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -564,7 +564,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -602,7 +602,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -640,7 +640,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -678,7 +678,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -716,7 +716,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -757,7 +757,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -796,7 +796,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -835,7 +835,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -874,7 +874,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -913,7 +913,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -952,7 +952,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be $null
             $meta.Label                 | Should Be $null
             $meta.Rating                | Should Be $null
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
 
             Remove-Item -LiteralPath $WorkingFiles.ResultFullName
         }
@@ -996,7 +996,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
             }
         Pop-Location
     }
@@ -1039,7 +1039,7 @@ Describe "Start-EXIFManipulation" {
             $meta.HierarchicalSubject   | Should Be "Test HierarchicalSubject"
             $meta.Label                 | Should Be "Test Label"
             $meta.Rating                | Should Be "4"
-            $meta.DocumentID            | Should Be $null
+            $meta.DocumentID            |Should BeIn @("DocumentID", $null)
             }
         Pop-Location
     }
