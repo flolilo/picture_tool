@@ -2,6 +2,13 @@
 # Copy XMP info from e.g. Capture One's XMP-files to DigiKam-compliant XMP files.
 # WARNING: QUICK AND DIRTY SOLUTION! USE AT YOUR OWN RISK!
 
+# DEFINITION: Get all error-outputs in English:
+[Threading.Thread]::CurrentThread.CurrentUICulture = 'en-US'
+# DEFINITION: Hopefully avoiding errors by wrong encoding now:
+$OutputEncoding = New-Object -TypeName System.Text.UTF8Encoding
+[Console]::InputEncoding = New-Object -TypeName System.Text.UTF8Encoding
+
+
 Write-Host "This tool copies XMP info from e.g. Capture One's XMP-files to e.g. DigiKam-compliant XMP files."
 Write-Host "WARNING: QUICK AND DIRTY SOLUTION! USE AT YOUR OWN RISK!"
 Start-Sleep -Seconds 2
@@ -23,19 +30,25 @@ foreach($i in $paths){
 
     Pop-Location
 }
-$XMP.Length
+Write-Host "In: $($XMP.Length)"
+
 $XMP | ForEach-Object {
     [array]$original = @(Get-Item $($_.XMP.Replace(".xmp",".*")) | Where-Object {$_.Extension -notmatch '^\.xmp.*$'} | Select-Object -ExpandProperty FullName)
     if($original.Count -gt 1){
         $original = @($original | Where-Object {$_ -notmatch '^.*\.jpg$'})
+        $original | Out-Null
         if($original.Count -gt 1){
             $original = @($original | Where-Object {$_ -notmatch '^.*\.psd$'})
+            $original | Out-Null
             if($original.Count -gt 1){
                 $original = @($original | Where-Object {$_ -notmatch '^.*\.tif$'})
+                $original | Out-Null
                 if($original.Count -gt 1){
                     $original = @($original | Where-Object {$_ -notmatch '^.*\.psb$'})
+                    $original | Out-Null
                     if($original.Count -gt 1){
                         $original = @($original | Where-Object {$_ -notmatch '^.*\.png$'})
+                        $original | Out-Null
         }}}}
     }
     $_.original = $($original)
@@ -50,7 +63,8 @@ $XMP | Out-Null
 $XMP = @($XMP | Sort-Object -Property XMP,original)
 $XMP | Out-Null
 
-$XMP.Length
+Write-Host "Out: $($XMP.Length)"
+Pause
 
 # $XMP | Format-List; $XMP.Length; exit
 # $XMP | Format-List | Out-File D:\xmp.txt; exit
@@ -131,7 +145,7 @@ Function Start-EXIFManipulation(){
     [array]$exiftoolArgList = @()
     for($i=0; $i -lt $WorkingFiles.Length; $i++){
         #$exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].original)`n-charset`nfilename=utf8`n-tagsfromfile`n$($WorkingFiles[$i].xmp)`n-charset`nfilename=utf8`n$($WorkingFiles[$i].original).xmp"
-        $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].xmp)`n-charset`nfilename=utf8`n-tagsfromfile`n$($WorkingFiles[$i].xmp)`n-overwrite_original`n-charset`nfilename=utf8`n$($WorkingFiles[$i].original).xmp"
+        $exiftoolArgList += "-charset`nfilename=utf8`n-tagsFromFile`n$($WorkingFiles[$i].xmp)`n-overwrite_original`n-charset`nfilename=utf8`n$($WorkingFiles[$i].original).xmp"
     }
 
     $sw = [diagnostics.stopwatch]::StartNew()
@@ -139,7 +153,7 @@ Function Start-EXIFManipulation(){
     # DEFINITION: Pass arguments to Exiftool:
     for($i=0; $i -lt $exiftoolArgList.Length; $i++){
         if($sw.Elapsed.TotalMilliseconds -ge 750){
-            Write-Progress -Activity "$choiceString..." -Status "File # $i - $($WorkingFiles[$i].ResultFullName)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
+            Write-Progress -Activity "$choiceString..." -Status "File # $i - $($WorkingFiles[$i].xmp)" -PercentComplete $($i * 100 / $WorkingFiles.Length)
             $sw.Reset()
             $sw.Start()
         }
